@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget and Date Management</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; min-height: 100vh; background: #f5f7fb; color: #333; }
+
+    /* Sidebar */
+    .sidebar { width: 240px; background: #004aad; color: #fff; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem 0; }
+    .sidebar-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 2rem; }
+    .sidebar-header img { width: 40px; }
+    .sidebar-header h2 { font-size: 1.2rem; margin: 0; }
+    .sidebar-menu { list-style: none; }
+    .sidebar-menu li { margin: 0.5rem 0; }
+    .sidebar-menu a { display: flex; align-items: center; gap: 10px; padding: 0.8rem 1.5rem; text-decoration: none; color: #fff; transition: background 0.3s; }
+    .sidebar-menu li.active a, .sidebar-menu a:hover { background: #0756cc; border-left: 4px solid #042f68; }
+    .sidebar-footer { text-align: center; font-size: 0.85rem; padding: 1rem; border-top: 1px solid rgba(255,255,255,0.2); }
+
+   /* Main */
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .navbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 2rem; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .navbar h1 { font-size: 1.4rem; color: #004aad; }
+    .profile { display: flex; align-items: center; gap: 1rem; }
+
+    /* Bell */
+    .profile .fa-bell { font-size: 1.2rem; cursor: pointer; position: relative; }
+    .badge {
+      background: red; color: #fff; font-size: 0.7rem;
+      border-radius: 50%; padding: 3px 6px;
+      position: absolute; top: -8px; right: -8px;
+    }
+
+    /* Profile dropdown */
+    .profile-dropdown { position: relative; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; }
+    .avatar { width: 35px; height: 35px; border-radius: 50%; }
+    .username { font-weight: 500; }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 120%;
+      right: 0;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      min-width: 160px;
+      z-index: 1000;
+    }
+    .dropdown-menu a {
+      display: block;
+      padding: 0.6rem 1rem;
+      text-decoration: none;
+      color: #333;
+      font-size: 0.85rem;
+    }
+    .dropdown-menu a:hover {
+      background: #f0f0f0;
+      color: #004aad;
+    }
+    /* Reports Section */
+    .reports-section { padding: 1.5rem; }
+    .report-box { background: #fff; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    thead th { background: #f0f0f0; color: #333; font-weight: 600; }
+    th, td { text-align: left; padding: 0.35rem 0.5rem; font-size: 0.72rem; word-break: break-word; line-height: 1.2; }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+    .action a { margin-right: 6px; font-size: 0.7rem; text-decoration: none; }
+    .edit { color: #004aad; }
+    .delete { color: #e74a3b; }
+
+    /* Search */
+    .report-box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+    .report-box-header h2 { margin: 0; font-size: 1rem; color: #222; }
+    .report-actions { display: flex; align-items: center; gap: 0.4rem; }
+    .report-actions input { padding: 0.3rem 0.6rem; border: 1px solid #ccc; border-radius: 16px; font-size: 0.75rem; }
+    .report-actions button { background: #004aad; border: none; color: white; padding: 0.3rem 0.6rem; border-radius: 50%; cursor: pointer; font-size: 0.7rem; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+    .modal-content { background: #fff; padding: 1rem; border-radius: 8px; width: 400px; max-width: 95%; box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+    .modal-header h3 { margin: 0; color: #004aad; }
+    .close { cursor: pointer; font-size: 1.2rem; }
+    .modal-body label { display: block; margin-top: 0.5rem; font-size: 0.8rem; }
+    .modal-body input { width: 100%; padding: 0.4rem; margin-top: 0.2rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem; }
+    .modal-footer { margin-top: 1rem; text-align: right; }
+    .modal-footer button { padding: 0.4rem 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .save-btn { background: #004aad; color: #fff; }
+    .cancel-btn { background: #ccc; }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-header">
+        <img src="logu.png" alt="Logo" class="logo">
+        <h2>TayabaStrack</h2>
+      </div>
+      <ul class="sidebar-menu">
+        <li><a href="dashboard.html"><i class="fa fa-home"></i> Dashboard</a></li>
+        <li><a href="usermanagement.html"><i class="fa fa-tasks"></i>User Management</a></li>
+        <li><a href="reports.html"><i class="fa fa-map-marker-alt"></i> Manage Reports</a></li>
+        <li  class="active"><a href="bdatemanagement.html"><i class="fa fa-users"></i> Budget and Date Management</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">
+      <p>Logged in as:</p>
+      <strong id="sidebarName">Loading...</strong><br>
+      <span id="sidebarPosition">Loading...</span>
+    </div>
+  </aside>
+  <!-- Main -->
+  <main class="main">
+      <!-- Navbar -->
+    <nav class="navbar">
+        <h1>Budget and Date Management</h1>
+      <div class="profile" onclick="toggleDropdown()">
+        <div style="position: relative;">
+          <i class="fa fa-bell"></i>
+          <span class="badge">1</span>
+        </div>
+        <!-- Profile dropdown -->
+        <div class="profile-dropdown" id="profileToggle">
+          <img src="mark.jpg" alt="Profile" class="avatar">
+          <span class="username" id="navUsername">Loading...</span>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="profile.html"><i class="fa fa-user"></i> Profile</a>
+            <a href="logout.html"><i class="fa fa-sign-out-alt"></i> Logout</a>
+
+        </div>
+      </div>
+    </nav>
+
+
+    <!-- Reports Section -->
+    <section class="reports-section">
+      <div class="report-box">
+        <div class="report-box-header">
+          <h2>Budget and Reports</h2>
+          <div class="report-actions">
+            <input type="text" id="searchReports" placeholder="Search Reports...">
+            <button><i class="fa fa-search"></i></button>
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Barangay</th>
+                <th>Phone No.</th>
+                <th>Issue</th>
+                <th>Location</th>
+                <th>Measurements</th>
+                <th>Image</th>
+                <th>Budget</th>
+                <th>Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="reportTable">
+              <tr>
+                <td>Cruz</td><td>Baguio</td><td>09178425963</td>
+                <td>Pothole</td><td>14.0121869, 121.5844248</td>
+                <td>Depth: 12m<br>Width: 55cm</td>
+                <td><img src="issue.png" width="40"></td>
+                <td>₱10,000</td><td>12/10/25–12/13/25</td>
+                <td class="action"><a href="#" class="edit">Edit</a><a href="#" class="delete">Delete</a></td>
+              </tr>
+              <tr>
+                <td>Reyes</td><td>Lalo</td><td>09287645510</td>
+                <td>Road Repair</td><td>14.0154676, 121.5857156</td>
+                <td>Length: 2.5m<br>Width: 2.5m</td>
+                <td><img src="issue.png" width="40"></td>
+                <td>₱10,000</td><td>12/10/25–12/13/25</td>
+                <td class="action"><a href="#" class="edit">Edit</a><a href="#" class="delete">Delete</a></td>
+              </tr>
+              <tr>
+                <td>Alonzo</td><td>Ipilan</td><td>09265589127</td>
+                <td>Streetlight</td><td>14.0170657, 121.5851823</td>
+                <td>Length: 40m<br>Height: 1.2m</td>
+                <td><img src="issue.png" width="40"></td>
+                <td>₱10,000</td><td>12/10/25–12/13/25</td>
+                <td class="action"><a href="#" class="edit">Edit</a><a href="#" class="delete">Delete</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Unified Modal -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Report</h3>
+        <span class="close" id="closeModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <label>Name</label><input type="text" id="editName">
+        <label>Barangay</label><input type="text" id="editBarangay">
+        <label>Phone</label><input type="text" id="editPhone">
+        <label>Issue</label><input type="text" id="editIssue">
+        <label>Location</label><input type="text" id="editLocation">
+        <label>Measurements</label><input type="text" id="editMeasurements">
+        <label>Budget</label><input type="text" id="editBudget">
+        <label>Date</label><input type="text" id="editDate">
+      </div>
+      <div class="modal-footer">
+        <button class="cancel-btn" id="cancelEdit">Cancel</button>
+        <button class="save-btn" id="saveEdit">Save</button>
+      </div>
+    </div>
+  </div>
+
+ <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyB06vfES5thZQi3Yd11vkooHVH-d5d4Y3o",
+      authDomain: "tayabastrack-23b95.firebaseapp.com",
+      projectId: "tayabastrack-23b95",
+      storageBucket: "tayabastrack-23b95.firebasestorage.app",
+      messagingSenderId: "674055915366",
+      appId: "1:674055915366:web:aa560336c1f8b504eeaaa7"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    db.collection("users").doc(user.uid).get().then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById("sidebarName").textContent = data.name || "No Name";
+        document.getElementById("sidebarPosition").textContent = data.position || "No Position";
+        document.getElementById("navUsername").textContent = data.name || "User";
+
+        // Redirect non-super-admin users
+        if (data.position !== "Super Admin") {
+          alert("Access denied. You will be redirected.");
+          window.location.href = "index.html"; 
+        }
+
+      }
+    });
+  } else {
+    window.location.href = "index.html"; // redirect if not logged in
+  }
+});
+
+    const modal = document.getElementById("editModal");
+    const closeModal = document.getElementById("closeModal");
+    const cancelEdit = document.getElementById("cancelEdit");
+    const saveEdit = document.getElementById("saveEdit");
+    let currentRow;
+
+    // Open modal on Edit
+    document.querySelectorAll(".edit").forEach(btn => {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        currentRow = this.closest("tr");
+        document.getElementById("editName").value = currentRow.cells[0].innerText;
+        document.getElementById("editBarangay").value = currentRow.cells[1].innerText;
+        document.getElementById("editPhone").value = currentRow.cells[2].innerText;
+        document.getElementById("editIssue").value = currentRow.cells[3].innerText;
+        document.getElementById("editLocation").value = currentRow.cells[4].innerText;
+        document.getElementById("editMeasurements").value = currentRow.cells[5].innerText.replace(/\n/g, " ");
+        document.getElementById("editBudget").value = currentRow.cells[7].innerText;
+        document.getElementById("editDate").value = currentRow.cells[8].innerText;
+        modal.style.display = "flex";
+      });
+    });
+
+    // Close modal
+    closeModal.onclick = () => modal.style.display = "none";
+    cancelEdit.onclick = () => modal.style.display = "none";
+    window.onclick = e => { if (e.target == modal) modal.style.display = "none"; }
+
+    // Save changes
+    saveEdit.addEventListener("click", () => {
+      currentRow.cells[0].innerText = document.getElementById("editName").value;
+      currentRow.cells[1].innerText = document.getElementById("editBarangay").value;
+      currentRow.cells[2].innerText = document.getElementById("editPhone").value;
+      currentRow.cells[3].innerText = document.getElementById("editIssue").value;
+      currentRow.cells[4].innerText = document.getElementById("editLocation").value;
+      currentRow.cells[5].innerText = document.getElementById("editMeasurements").value;
+      currentRow.cells[7].innerText = document.getElementById("editBudget").value;
+      currentRow.cells[8].innerText = document.getElementById("editDate").value;
+      modal.style.display = "none";
+    });
+
+    // Delete row
+    document.querySelectorAll(".delete").forEach(btn => {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        this.closest("tr").remove();
+      });
+    });
+
+    // Search filter
+    document.getElementById("searchReports").addEventListener("keyup", function() {
+      const filter = this.value.toLowerCase();
+      const rows = document.getElementById("reportTable").getElementsByTagName("tr");
+      for (let i = 0; i < rows.length; i++) {
+        let cells = rows[i].getElementsByTagName("td");
+        let match = false;
+        for (let j = 0; j < cells.length; j++) {
+          if (cells[j].innerText.toLowerCase().includes(filter)) {
+            match = true; break;
+          }
+        }
+        rows[i].style.display = match ? "" : "none";
+      }
+    });
+
+        // Profile dropdown logic
+    const profileToggle = document.getElementById("profileToggle");
+    const dropdownMenu = document.getElementById("dropdownMenu");
+
+    profileToggle.addEventListener("click", () => {
+      dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
+    });
+
+    window.addEventListener("click", function(e) {
+      if (!profileToggle.contains(e.target)) {
+        dropdownMenu.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>
