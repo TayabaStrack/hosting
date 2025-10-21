@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TayabaStrack - Public Dashboard</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6fb;
+    }
+
+    header {
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 25px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      color: #2164f3;
+      font-size: 1.3rem;
+    }
+
+    .login-btn {
+      background: #2164f3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 15px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.3s;
+    }
+
+    .login-btn:hover {
+      background: #1a52cc;
+    }
+
+    .container {
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 1200px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+      font-size: 1.4rem;
+    }
+
+    .filters-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .filters-map-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .filters-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .filter-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .search-bar input,
+    .filter-group select {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border 0.3s;
+      width: 100%;
+    }
+
+    .search-bar input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: #2164f3;
+      box-shadow: 0 0 0 3px rgba(33, 100, 243, 0.1);
+    }
+
+    .map-wrapper-container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .map-section-title {
+      font-size: 1.1rem;
+      color: #333;
+      font-weight: bold;
+      margin-bottom: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      transition: background 0.3s;
+      user-select: none;
+    }
+
+    .map-section-title:hover {
+      background: #e9ecef;
+    }
+
+    .map-section-title::after {
+      content: '▼';
+      font-size: 0.9rem;
+      transition: transform 0.3s;
+      color: #2164f3;
+    }
+
+    .map-section-title.collapsed::after {
+      transform: rotate(-90deg);
+    }
+
+    .map-container {
+      background: #f8f9fa;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #e9ecef;
+      min-height: 450px;
+      position: relative;
+      flex: 1;
+      transition: all 0.3s ease;
+    }
+
+    .map-container.collapsed {
+      display: none;
+    }
+
+    .map-wrapper {
+      width: 100%;
+      height: 100%;
+      min-height: 450px;
+    }
+
+    #projectMap {
+      width: 100%;
+      height: 100%;
+      min-height: 450px;
+    }
+
+    .map-legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 12px 15px;
+      border-radius: 8px;
+      z-index: 400;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .legend-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .legend-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .legend-marker {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+
+    .legend-marker.completed {
+      background: #28a745;
+    }
+
+    .legend-marker.ongoing {
+      background: #ffc107;
+    }
+
+    .legend-marker.reported {
+      background: #17a2b8;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .filter-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .search-bar input,
+    .filter-group select {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border 0.3s;
+      width: 100%;
+    }
+
+    .search-bar input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: #2164f3;
+      box-shadow: 0 0 0 3px rgba(33, 100, 243, 0.1);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2164f3;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .carousel-section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow: hidden;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .carousel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .carousel-title {
+      font-size: 1.2rem;
+      color: #333;
+      font-weight: bold;
+    }
+
+    .carousel-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .carousel-btn {
+      background: #2164f3;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+
+    .carousel-btn:hover {
+      background: #1a52cc;
+    }
+
+    .carousel-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .carousel-wrapper {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .carousel-container {
+      display: flex;
+      gap: 20px;
+      transition: transform 0.5s ease;
+    }
+
+    .older-posts-section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    .older-posts-title {
+      font-size: 1.2rem;
+      color: #333;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .posts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #fafafa;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    .carousel-container .card {
+      flex: 0 0 280px;
+    }
+
+    .card-image-wrapper {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      overflow: hidden;
+      background: #e9ecef;
+    }
+
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+
+    .card:hover img {
+      transform: scale(1.1);
+    }
+
+    .new-label {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #28a745;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .card-content {
+      padding: 15px;
+    }
+
+    .card h3 {
+      color: #2164f3;
+      font-size: 1rem;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .card-info {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .card-info strong {
+      color: #333;
+      display: block;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+
+    .status-ongoing {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .status-resolved {
+      background: #28a745;
+      color: white;
+    }
+
+    .status-reported {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .status-completed {
+      background: #1cc88a;
+      color: white;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #e9ecef;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #2164f3, #1cc88a);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 1.1rem;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-size: 1rem;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      border: 1px solid #f5c6cb;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 40px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 1000px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s;
+      margin: 0 auto;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .close-btn {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+
+    .modal-images {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0 30px 0;
+      clear: both;
+    }
+
+    .modal-image-container {
+      position: relative;
+    }
+
+    .modal-image {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .modal-image:hover {
+      transform: scale(1.02);
+    }
+
+    .image-label {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .modal-header-section {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 25px;
+      padding-bottom: 25px;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .project-title {
+      font-size: 1.5rem;
+      color: #2164f3;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .project-dates {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .date-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+
+    .date-label {
+      font-weight: 600;
+      color: #666;
+      min-width: 80px;
+    }
+
+    .date-value {
+      color: #333;
+    }
+
+    .modal-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .info-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .modal-section {
+      margin-bottom: 25px;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #2164f3;
+    }
+
+    .section-content {
+      color: #666;
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .progress-section {
+      margin-bottom: 25px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .progress-percentage {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2164f3;
+    }
+
+    .progress-bar-large {
+      width: 100%;
+      height: 20px;
+      background: #e9ecef;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2164f3, #1cc88a);
+      border-radius: 10px;
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .coordinates-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .coordinate-item {
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    .image-preview-modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .image-preview-modal.active {
+      display: flex;
+    }
+
+    .image-preview-content {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .image-preview-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: white;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .image-preview-close:hover {
+      color: #ccc;
+    }
+
+    @media (max-width: 968px) {
+      .modal-images {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-header-section {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filters-map-container {
+        grid-template-columns: 1fr;
+      }
+
+      .coordinates-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .map-legend {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 10px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .modal-content {
+        padding: 20px;
+        margin: 20px;
+      }
+
+      .card {
+        flex: 0 0 250px;
+      }
+
+      .container {
+        padding: 15px;
+      }
+
+      .posts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .carousel-controls {
+        display: none;
+      }
+
+      .carousel-container {
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding-bottom: 10px;
+      }
+
+      .carousel-container::-webkit-scrollbar {
+        height: 8px;
+      }
+
+      .carousel-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+
+      .carousel-container::-webkit-scrollbar-thumb {
+        background: #2164f3;
+        border-radius: 4px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* Mobile: Smaller map height */
+      .map-container {
+        min-height: 250px;
+      }
+
+      .map-wrapper {
+        min-height: 250px;
+      }
+
+      #projectMap {
+        min-height: 250px;
+      }
+
+      .map-section-title {
+        font-size: 1rem;
+        padding: 10px;
+      }
+
+      .map-section-title::after {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>TayabaStrack</h1>
+    <a href="login.html" class="login-btn">Login</a>
+  </header>
+
+  <div class="container">
+    <h2>MGA PROYEKTO NG TAYABAS</h2>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-number" id="statTotal">0</div>
+        <div class="stat-label">Kabuuang Proyekto</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statOngoing">0</div>
+        <div class="stat-label">Kasalukuyang Ginagawa</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statCompleted">0</div>
+        <div class="stat-label">Natapos na</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statBarangays">0</div>
+        <div class="stat-label">Mga Barangay na Nakinabang</div>
+      </div>
+    </div>
+
+    <!-- Filters and Map Section -->
+    <div class="filters-section">
+      <div class="filters-map-container">
+        <!-- Left Side: Filters -->
+        <div class="filters-wrapper">
+          <div class="filter-group">
+            <label class="filter-label">Maghanap ng Proyekto</label>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Maghanap ng pangalan ng proyekto, barangay, contractor..." 
+            />
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Salain ayon sa Barangay</label>
+            <select id="barangayFilter">
+              <option value="">Lahat ng Barangay</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Salain ayon sa Katayuan</label>
+            <select id="statusFilter">
+              <option value="">Lahat ng Katayuan</option>
+              <option value="ongoing">Kasalukuyang Ginagawa</option>
+              <option value="completed">Natapos na</option>
+              <option value="reported">Naiulat</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Right Side: Map -->
+        <div class="map-wrapper-container">
+          <div class="map-section-title">Mapa ng Natapos na Proyekto</div>
+          <div class="map-container">
+            <div class="map-wrapper">
+              <div id="projectMap"></div>
+            </div>
+            <div class="map-legend">
+              <div class="legend-title">Alamat:</div>
+              <div class="legend-item">
+                <div class="legend-marker completed"></div>
+                <span>Natapos na</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-marker ongoing"></div>
+                <span>Kasalukuyang Ginagawa</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-marker reported"></div>
+                <span>Naiulat</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="errorMessage" class="error" style="display:none;"></div>
+
+    <!-- Recent Posts Carousel -->
+    <div class="carousel-section" id="carouselSection">
+      <div class="carousel-header">
+        <div class="carousel-title">Pinakabagong Proyekto</div>
+        <div class="carousel-controls">
+          <button class="carousel-btn" id="prevBtn">‹</button>
+          <button class="carousel-btn" id="nextBtn">›</button>
+        </div>
+      </div>
+      <div id="loadingCarousel" class="loading">Naglo-load ng pinakabagong proyekto...</div>
+      <div id="noDataCarousel" class="no-data" style="display:none;">Walang makitang proyekto.</div>
+      <div class="carousel-wrapper">
+        <div class="carousel-container" id="carouselContainer">
+          <!-- Recent posts appear here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Older Posts Grid -->
+    <div class="older-posts-section" id="olderPostsSection" style="display:none;">
+      <div class="older-posts-title">Mga Nakaraang Proyekto</div>
+      <div id="loadingOlder" class="loading">Naglo-load ng nakaraang proyekto...</div>
+      <div id="noDataOlder" class="no-data" style="display:none;">Walang makitang nakaraang proyekto.</div>
+      <div id="noSearchMessage" class="no-data" style="display:none;">Walang proyektong tumutugma sa inyong paghahanap.</div>
+      <div class="posts-grid" id="olderPostsContainer">
+        <!-- Older posts appear here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Modal -->
+  <div id="bulletinModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      
+      <!-- Before/After Images -->
+      <div class="modal-images">
+        <div class="modal-image-container">
+          <img id="modalBeforeImage" class="modal-image" src="" alt="Before" onclick="previewImage(this.src)">
+          <div class="image-label">BEFORE</div>
+        </div>
+        <div class="modal-image-container">
+          <img id="modalAfterImage" class="modal-image" src="" alt="After" onclick="previewImage(this.src)">
+          <div class="image-label">AFTER</div>
+        </div>
+      </div>
+
+      <!-- Project Name and Dates -->
+      <div class="modal-header-section">
+        <div>
+          <div class="project-title" id="modalProjectName">Pangalan ng Proyekto</div>
+          <div class="info-item" style="margin-top: 10px;">
+            <span class="info-label">ID ng Proyekto</span>
+            <span class="info-value" id="modalProjectId">N/A</span>
+          </div>
+        </div>
+        <div class="project-dates">
+          <div class="date-item">
+            <span class="date-label">Petsa ng Simula:</span>
+            <span class="date-value" id="modalStartDate">TBD</span>
+          </div>
+          <div class="date-item">
+            <span class="date-label">Petsa ng Pagtatapos:</span>
+            <span class="date-value" id="modalEndDate">TBD</span>
+          </div>
+          <div class="date-item">
+            <span class="date-label">Katayuan:</span>
+            <span class="date-value">
+              <span class="status-badge" id="modalStatusBadge">N/A</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barangay, Contractor, Supplier -->
+      <div class="modal-info-grid">
+        <div class="info-item">
+          <span class="info-label">Barangay</span>
+          <span class="info-value" id="modalBarangay">N/A</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Kontratista</span>
+          <span class="info-value" id="modalContractor">N/A</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Supplier</span>
+          <span class="info-value" id="modalSupplier">N/A</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Uri ng Proyekto</span>
+          <span class="info-value" id="modalProjectType">N/A</span>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-section">
+        <div class="progress-header">
+          <div class="section-title">Pag-unlad ng Proyekto</div>
+          <div class="progress-percentage" id="modalProgress">0%</div>
+        </div>
+        <div class="progress-bar-large">
+          <div class="progress-fill" id="modalProgressBar" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="modal-section">
+        <div class="section-title">Paglalarawan ng Proyekto</div>
+        <p class="section-content" id="modalDescription">Walang paglalarawan</p>
+      </div>
+
+      <!-- Progress Report -->
+      <div class="modal-section">
+        <div class="section-title">Ulat ng Pag-unlad</div>
+        <p class="section-content" id="modalProgressReport">Walang ulat ng pag-unlad</p>
+      </div>
+
+      <!-- Coordinates -->
+      <div class="modal-section">
+        <div class="section-title">Lokasyon (Coordinates)</div>
+        <div class="coordinates-grid">
+          <div class="coordinate-item">
+            <strong>Latitude:</strong> <span id="modalLatitude">N/A</span>
+          </div>
+          <div class="coordinate-item">
+            <strong>Longitude:</strong> <span id="modalLongitude">N/A</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Preview Modal -->
+  <div id="imagePreviewModal" class="image-preview-modal">
+    <span class="image-preview-close">&times;</span>
+    <img id="imagePreviewContent" class="image-preview-content" src="" alt="Preview">
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB06vfES5thZQi3Yd11vkooHVH-d5d4Y3o",
+      authDomain: "tayabastrack-23b95.firebaseapp.com",
+      projectId: "tayabastrack-23b95",
+      storageBucket: "tayabastrack-23b95.appspot.com",
+      messagingSenderId: "674055915366",
+      appId: "1:674055915366:web:aa560336c1f8b504eeaaa7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // Leaflet Map Setup
+    let map = null;
+    let markers = [];
+
+    function initMap() {
+      // Center on Tayabas City, Quezon
+      map = L.map('projectMap').setView([14.0266, 121.5931], 12);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(map);
+
+      // Add a slight delay to ensure proper rendering
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 250);
+    }
+
+    function updateMapMarkers(bulletins) {
+      // Clear existing markers
+      markers.forEach(marker => map.removeLayer(marker));
+      markers = [];
+
+      console.log('Total bulletins:', bulletins.length);
+
+      // Filter completed projects with coordinates
+      const completedProjects = bulletins.filter(b => {
+        const status = (b.status || '').toLowerCase();
+        const hasCoords = b.latitude && b.longitude;
+        const isCompleted = status.includes('completed') || status.includes('resolved') || status.includes('natapos');
+        
+        console.log('Project:', b.projectName || b.issue, {
+          status: b.status,
+          isCompleted,
+          lat: b.latitude,
+          lng: b.longitude,
+          hasCoords
+        });
+        
+        return hasCoords; // Show ALL projects with coordinates, not just completed
+      });
+
+      console.log('Projects with coordinates:', completedProjects.length);
+
+      // Add markers for all projects with coordinates
+      completedProjects.forEach(project => {
+        const lat = parseFloat(project.latitude);
+        const lng = parseFloat(project.longitude);
+        
+        console.log('Processing marker:', {
+          name: project.projectName || project.issue,
+          lat,
+          lng,
+          isValid: !isNaN(lat) && !isNaN(lng)
+        });
+        
+        if (!isNaN(lat) && !isNaN(lng)) {
+          // Determine marker color based on status
+          const status = (project.status || '').toLowerCase();
+          let markerColor = '#2164f3'; // Default blue
+          
+          if (status.includes('completed') || status.includes('resolved') || status.includes('natapos')) {
+            markerColor = '#28a745'; // Green for completed
+          } else if (status.includes('ongoing') || status.includes('ginagawa')) {
+            markerColor = '#ffc107'; // Yellow for ongoing
+          } else {
+            markerColor = '#17a2b8'; // Cyan for reported
+          }
+
+          const marker = L.marker([lat, lng], {
+            icon: L.divIcon({
+              className: 'custom-marker',
+              html: `<div style="background: ${markerColor}; width: 26px; height: 26px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold;">📍</div>`,
+              iconSize: [26, 26],
+              iconAnchor: [13, 13]
+            })
+          }).addTo(map);
+
+          const projectName = project.projectName || project.issue || 'Unnamed Project';
+          const barangay = project.barangay || 'N/A';
+          const progress = project.progress || 0;
+          
+          marker.bindPopup(`
+            <div style="font-family: Arial, sans-serif; min-width: 200px;">
+              <strong style="color: ${markerColor}; font-size: 14px; display: block; margin-bottom: 5px;">${projectName}</strong>
+              <div style="font-size: 12px; margin-bottom: 3px;">
+                <strong>Barangay:</strong> ${barangay}
+              </div>
+              <div style="font-size: 12px; margin-bottom: 3px;">
+                <strong>Status:</strong> ${project.status || 'N/A'}
+              </div>
+              <div style="font-size: 12px; margin-bottom: 5px;">
+                <strong>Progress:</strong> ${progress}%
+              </div>
+              <div style="width: 100%; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; margin-bottom: 5px;">
+                <div style="width: ${progress}%; height: 100%; background: ${markerColor};"></div>
+              </div>
+              <div style="font-size: 11px; color: #666; text-align: center; margin-top: 5px; cursor: pointer; padding: 4px; background: #f8f9fa; border-radius: 4px;">
+                Click to view details
+              </div>
+            </div>
+          `);
+
+          marker.on('click', () => {
+            openModal(project);
+          });
+
+          markers.push(marker);
+          
+          console.log('Marker added at:', lat, lng);
+        }
+      });
+
+      console.log('Total markers added:', markers.length);
+
+      // Fit bounds if there are markers
+      if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+      } else {
+        console.warn('No markers to display on map');
+      }
+    }
+
+    // 66 Barangays of Tayabas City
+    const barangays = [
+      "Alitao", "Alsam Ibaba", "Alsam Ilaya", "Alupay", "Angeles Zone I",
+      "Angeles Zone II", "Angeles Zone III", "Angeles Zone IV", "Angustias Zone I",
+      "Angustias Zone II", "Angustias Zone III", "Angustias Zone IV", "Anos",
+      "Ayaas", "Baguio", "Banilad", "Bukal Ibaba", "Bukal Ilaya", "Callejon",
+      "Camaysa", "Dapdap", "Domoit Kanluran", "Domoit Silangan", "Gibanga",
+      "Guinhalinan", "Ibas", "Ilasan Ibaba", "Ilasan Ilaya", "Ipilan",
+      "Isabang", "Katigan Kanluran", "Katigan Silangan", "Lakawan", "Lita",
+      "Mabato", "Mabunga", "Masikap", "Mateuna", "Mayowe", "Nangka Ibaba",
+      "Nangka Ilaya", "Opias", "Palale Ibaba", "Palale Ilaya", "Palale Kanluran",
+      "Palale Silangan", "Pandakaki", "Pook", "Potrero", "San Diego Zone I",
+      "San Diego Zone II", "San Diego Zone III", "San Diego Zone IV",
+      "San Isidro Zone I", "San Isidro Zone II", "San Isidro Zone III",
+      "San Isidro Zone IV", "San Roque Zone I", "San Roque Zone II",
+      "Wakas", "Laguio", "Sabang"
+    ];
+
+    const carouselContainer = document.getElementById("carouselContainer");
+    const olderPostsContainer = document.getElementById("olderPostsContainer");
+    const loadingCarousel = document.getElementById("loadingCarousel");
+    const loadingOlder = document.getElementById("loadingOlder");
+    const errorMessage = document.getElementById("errorMessage");
+    const noDataCarousel = document.getElementById("noDataCarousel");
+    const noDataOlder = document.getElementById("noDataOlder");
+    const noSearchMessage = document.getElementById("noSearchMessage");
+    const searchInput = document.getElementById("searchInput");
+    const barangayFilter = document.getElementById("barangayFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const modal = document.getElementById("bulletinModal");
+    const closeBtn = document.querySelector(".close-btn");
+    const imagePreviewModal = document.getElementById("imagePreviewModal");
+    const imagePreviewContent = document.getElementById("imagePreviewContent");
+    const imagePreviewClose = document.querySelector(".image-preview-close");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const olderPostsSection = document.getElementById("olderPostsSection");
+
+    let allBulletins = [];
+    let currentCarouselIndex = 0;
+    const cardsPerView = 3;
+
+    // Populate barangay dropdown
+    barangays.forEach(barangay => {
+      const option = document.createElement("option");
+      option.value = barangay;
+      option.textContent = barangay;
+      barangayFilter.appendChild(option);
+    });
+
+    window.previewImage = function(src) {
+      if (src && !src.includes('placeholder')) {
+        imagePreviewContent.src = src;
+        imagePreviewModal.classList.add("active");
+      }
+    };
+
+    async function getImageUrl(imagePath) {
+      try {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath;
+        
+        const url = await getDownloadURL(ref(storage, imagePath));
+        return url;
+      } catch (error) {
+        console.error("Error getting image URL:", error);
+        return null;
+      }
+    }
+
+    function formatDate(date) {
+      if (!date) return 'N/A';
+      if (typeof date === 'object' && date.toDate) {
+        return date.toDate().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+      if (date instanceof Date) {
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+      try {
+        const parsedDate = new Date(date);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        }
+      } catch (e) {
+        console.error('Date parsing error:', e);
+      }
+      return date.toString();
+    }
+
+    function getStatusClass(status) {
+      if (!status) return 'status-reported';
+      const lower = status.toLowerCase();
+      if (lower.includes('ongoing') || lower.includes('in progress')) return 'status-ongoing';
+      if (lower.includes('resolved') || lower.includes('fixed')) return 'status-resolved';
+      if (lower.includes('completed')) return 'status-completed';
+      return 'status-reported';
+    }
+
+    function updateStatistics(bulletins) {
+      const total = bulletins.length;
+      const ongoing = bulletins.filter(b => {
+        const status = (b.status || '').toLowerCase();
+        return status.includes('ongoing') || status.includes('in progress');
+      }).length;
+      const completed = bulletins.filter(b => {
+        const status = (b.status || '').toLowerCase();
+        return status.includes('completed') || status.includes('resolved');
+      }).length;
+      const uniqueBarangays = new Set(bulletins.map(b => b.barangay).filter(Boolean)).size;
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statOngoing').textContent = ongoing;
+      document.getElementById('statCompleted').textContent = completed;
+      document.getElementById('statBarangays').textContent = uniqueBarangays;
+    }
+
+    function createCard(data, index, showNewLabel = false) {
+      const card = document.createElement("div");
+      card.classList.add("card");
+      
+      const imageUrl = data.imageURL || 'https://via.placeholder.com/300x200?text=No+Image';
+      const progress = data.progress || 0;
+      const projectName = data.projectName || data.issue || 'Unnamed Project';
+      
+      card.innerHTML = `
+        ${showNewLabel ? '<div class="new-label">NEW</div>' : ''}
+        <div class="card-image-wrapper">
+          <img src="${imageUrl}" 
+               alt="project image"
+               onerror="this.src='https://via.placeholder.com/300x200?text=Image+Not+Available'">
+        </div>
+        <div class="card-content">
+          <h3>${projectName.substring(0, 50)}${projectName.length > 50 ? '...' : ''}</h3>
+          <div class="card-info">
+            <strong>Barangay:</strong> ${data.barangay || 'N/A'}
+          </div>
+          <div class="card-info">
+            <strong class="status-badge ${getStatusClass(data.status)}">
+              ${data.status || 'Reported'}
+            </strong>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: ${progress}%"></div>
+          </div>
+          <div class="card-info" style="margin-top: 5px; text-align: right;">
+            ${progress}% Nakumpleto
+          </div>
+        </div>
+      `;
+
+      card.addEventListener("click", () => openModal(data));
+      return card;
+    }
+
+    async function openModal(data) {
+      // Project Name
+      document.getElementById("modalProjectName").textContent = data.projectName || data.issue || 'Unnamed Project';
+      
+      // Project ID
+      document.getElementById("modalProjectId").textContent = data.projectId || data.id || 'N/A';
+      
+      // Dates
+      document.getElementById("modalStartDate").textContent = data.repairStartDate ? formatDate(data.repairStartDate) : 'TBD';
+      document.getElementById("modalEndDate").textContent = data.repairEndDate ? formatDate(data.repairEndDate) : 'TBD';
+      
+      // Status Badge
+      const statusBadge = document.getElementById("modalStatusBadge");
+      statusBadge.textContent = data.status || 'Not specified';
+      statusBadge.className = 'status-badge ' + getStatusClass(data.status);
+      
+      // Barangay, Contractor, Supplier
+      document.getElementById("modalBarangay").textContent = data.barangay || 'N/A';
+      document.getElementById("modalContractor").textContent = data.contractor || 'N/A';
+      document.getElementById("modalSupplier").textContent = data.supplier || 'N/A';
+      document.getElementById("modalProjectType").textContent = data.projectType || 'Infrastructure';
+      
+      // Progress
+      const progress = data.progress || 0;
+      document.getElementById("modalProgress").textContent = progress + '%';
+      document.getElementById("modalProgressBar").style.width = progress + '%';
+      
+      // Description
+      document.getElementById("modalDescription").textContent = data.description || data.issue || 'Walang paglalarawan';
+      
+      // Progress Report
+      document.getElementById("modalProgressReport").textContent = data.progressReport || 'Walang ulat ng pag-unlad';
+      
+      // Coordinates
+      document.getElementById("modalLatitude").textContent = data.latitude || 'N/A';
+      document.getElementById("modalLongitude").textContent = data.longitude || 'N/A';
+      
+      // Handle BEFORE image
+      const beforeImageUrl = data.imageURL || 'https://via.placeholder.com/400x300?text=No+Before+Image';
+      document.getElementById("modalBeforeImage").src = beforeImageUrl;
+      document.getElementById("modalBeforeImage").onerror = function() {
+        this.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+      };
+      
+      // Handle AFTER image
+      const afterImageUrl = data.afterImage || data.completionImage;
+      if (afterImageUrl) {
+        document.getElementById("modalAfterImage").src = afterImageUrl;
+        document.getElementById("modalAfterImage").onerror = function() {
+          this.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+        };
+      } else {
+        document.getElementById("modalAfterImage").src = 'https://via.placeholder.com/400x300?text=No+After+Image';
+      }
+      
+      modal.classList.add("active");
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.remove("active");
+      document.body.style.overflow = 'auto';
+    }
+
+    function closeImagePreview() {
+      imagePreviewModal.classList.remove("active");
+    }
+
+    function updateCarousel() {
+      const cardWidth = 280;
+      const gap = 20;
+      const offset = -(currentCarouselIndex * (cardWidth + gap));
+      carouselContainer.style.transform = `translateX(${offset}px)`;
+
+      const recentBulletins = allBulletins.slice(0, 10);
+      const maxIndex = Math.max(0, recentBulletins.length - cardsPerView);
+      
+      prevBtn.disabled = currentCarouselIndex === 0;
+      nextBtn.disabled = currentCarouselIndex >= maxIndex;
+    }
+
+    function filterBulletins() {
+      loadingCarousel.style.display = "none";
+      loadingOlder.style.display = "none";
+      errorMessage.style.display = "none";
+      noDataCarousel.style.display = "none";
+      noDataOlder.style.display = "none";
+      noSearchMessage.style.display = "none";
+      carouselContainer.innerHTML = "";
+      olderPostsContainer.innerHTML = "";
+
+      const searchTerm = searchInput.value.toLowerCase();
+      const selectedBarangay = barangayFilter.value;
+      const selectedStatus = statusFilter.value;
+
+      const filtered = allBulletins.filter(data => {
+        // Search filter
+        const barangay = (data.barangay || '').toLowerCase();
+        const projectName = (data.projectName || data.issue || '').toLowerCase();
+        const contractor = (data.contractor || '').toLowerCase();
+        const supplier = (data.supplier || '').toLowerCase();
+        const status = (data.status || '').toLowerCase();
+        const description = (data.description || '').toLowerCase();
+
+        const matchesSearch = !searchTerm || 
+          barangay.includes(searchTerm) || 
+          projectName.includes(searchTerm) || 
+          contractor.includes(searchTerm) ||
+          supplier.includes(searchTerm) ||
+          status.includes(searchTerm) ||
+          description.includes(searchTerm);
+
+        // Barangay filter
+        const matchesBarangay = !selectedBarangay || barangay === selectedBarangay.toLowerCase();
+
+        // Status filter
+        const matchesStatus = !selectedStatus || status.includes(selectedStatus);
+
+        return matchesSearch && matchesBarangay && matchesStatus;
+      });
+
+      // Update statistics with filtered results
+      updateStatistics(filtered);
+
+      if (filtered.length === 0) {
+        if (searchTerm || selectedBarangay || selectedStatus) {
+          noSearchMessage.style.display = "block";
+        } else {
+          noDataCarousel.style.display = "block";
+        }
+        olderPostsSection.style.display = "none";
+        return;
+      }
+
+      const recentBulletins = filtered.slice(0, 10);
+      const olderBulletins = filtered.slice(10);
+
+      // Render carousel
+      recentBulletins.forEach((data, index) => {
+        carouselContainer.appendChild(createCard(data, index, index === 0 && !searchTerm && !selectedBarangay && !selectedStatus));
+      });
+
+      // Render older posts
+      if (olderBulletins.length > 0) {
+        olderPostsSection.style.display = "block";
+        olderBulletins.forEach((data, index) => {
+          olderPostsContainer.appendChild(createCard(data, index + 10));
+        });
+      } else {
+        olderPostsSection.style.display = "none";
+      }
+
+      currentCarouselIndex = 0;
+      updateCarousel();
+    }
+
+    function renderBulletins(snapshot) {
+      loadingCarousel.style.display = "none";
+      loadingOlder.style.display = "none";
+
+      if (snapshot.empty) {
+        allBulletins = [];
+        noDataCarousel.style.display = "block";
+        olderPostsSection.style.display = "none";
+        updateStatistics([]);
+        return;
+      }
+
+      allBulletins = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      filterBulletins();
+      updateMapMarkers(allBulletins);
+    }
+
+    function handleError(error) {
+      console.error("Error loading projects:", error);
+      loadingCarousel.style.display = "none";
+      loadingOlder.style.display = "none";
+      errorMessage.textContent = "May problema sa paglo-load ng mga proyekto. Mangyaring i-refresh ang pahina.";
+      errorMessage.style.display = "block";
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentCarouselIndex > 0) {
+        currentCarouselIndex--;
+        updateCarousel();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      const recentBulletins = allBulletins.slice(0, 10);
+      const maxIndex = Math.max(0, recentBulletins.length - cardsPerView);
+      if (currentCarouselIndex < maxIndex) {
+        currentCarouselIndex++;
+        updateCarousel();
+      }
+    });
+
+    closeBtn.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    imagePreviewClose.addEventListener("click", closeImagePreview);
+    imagePreviewModal.addEventListener("click", (e) => {
+      if (e.target === imagePreviewModal) closeImagePreview();
+    });
+
+    searchInput.addEventListener("input", filterBulletins);
+    barangayFilter.addEventListener("change", filterBulletins);
+    statusFilter.addEventListener("change", filterBulletins);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (imagePreviewModal.classList.contains("active")) {
+          closeImagePreview();
+        } else if (modal.classList.contains("active")) {
+          closeModal();
+        }
+      }
+    });
+
+    // Initialize map when page loads
+    window.addEventListener('load', () => {
+      initMap();
+      setupMapToggle();
+    });
+
+    // Map toggle functionality for all screen sizes
+    function setupMapToggle() {
+      const mapTitle = document.querySelector('.map-section-title');
+      const mapContainer = document.querySelector('.map-container');
+      
+      // Start collapsed by default
+      mapTitle.classList.add('collapsed');
+      mapContainer.classList.add('collapsed');
+      
+      mapTitle.addEventListener('click', () => {
+        mapTitle.classList.toggle('collapsed');
+        mapContainer.classList.toggle('collapsed');
+        
+        // Refresh map size when expanded
+        if (!mapContainer.classList.contains('collapsed')) {
+          setTimeout(() => {
+            map.invalidateSize();
+          }, 300);
+        }
+      });
+    }
+
+    try {
+      const q = query(collection(db, "ad_bulletin"), orderBy("date", "desc"));
+      onSnapshot(q, renderBulletins, handleError);
+    } catch (error) {
+      handleError(error);
+    }
+  </script>
+</body>
+</html>
