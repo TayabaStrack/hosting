@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "tayabastrack-latest",
+    "public": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
