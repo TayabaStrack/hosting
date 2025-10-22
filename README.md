@@ -1,2 +1,2 @@
 # hosting
-test 1
+-public dashboard = display all ongoing and completed reports
