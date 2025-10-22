@@ -1,0 +1,23 @@
+[debug] [2025-10-22T06:01:14.661Z] ----------------------------------------------------------------------
+[debug] [2025-10-22T06:01:14.665Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Muchie\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-10-22T06:01:14.666Z] CLI Version:   14.20.0
+[debug] [2025-10-22T06:01:14.666Z] Platform:      win32
+[debug] [2025-10-22T06:01:14.667Z] Node Version:  v22.20.0
+[debug] [2025-10-22T06:01:14.667Z] Time:          Wed Oct 22 2025 14:01:14 GMT+0800 (Singapore Standard Time)
+[debug] [2025-10-22T06:01:14.667Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\Muchie\Documents\AAWEB DEV\tayabastrack-latest
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
