@@ -416,9 +416,24 @@
 
     editPhoto.addEventListener("change",e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith('image/')){alert('Please select an image file');editPhoto.value='';return}if(file.size>5*1024*1024){alert('Image size should be less than 5MB');editPhoto.value='';return}const reader=new FileReader();reader.onload=ev=>{previewImg.src=ev.target.result};reader.readAsDataURL(file)});
 
-    window.saveEdit = async function() {
+window.saveEdit = async function() {
+  console.log("=== SAVE EDIT STARTED ===");
+  
+  // Check 1: User logged in?
   if (!currentUser) {
     alert("No user logged in");
+    return;
+  }
+  console.log("✅ Current user:", currentUser.uid);
+  console.log("✅ User email:", currentUser.email);
+  
+  // Check 2: Get auth token
+  try {
+    const token = await currentUser.getIdToken();
+    console.log("✅ Auth token obtained:", token.substring(0, 20) + "...");
+  } catch(e) {
+    console.error("❌ Failed to get auth token:", e);
+    alert("Authentication error. Please log out and log back in.");
     return;
   }
   
@@ -450,8 +465,16 @@
     saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
     
     if (file) {
-      console.log("Starting photo upload for user:", uid);
+      console.log("=== FILE UPLOAD STARTED ===");
+      console.log("File name:", file.name);
+      console.log("File size:", file.size, "bytes");
+      console.log("File type:", file.type);
+      
+      // Check 3: Get storage instance
       const storage = getStorage();
+      console.log("✅ Storage instance obtained");
+      console.log("Storage bucket:", storage.app.options.storageBucket);
+      
       const timestamp = Date.now();
       const fileExt = file.name.split('.').pop().toLowerCase();
       const allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -460,24 +483,35 @@
         throw new Error("Invalid file type. Only JPG, PNG, GIF, and WEBP are allowed.");
       }
       
-      const fileName = `profile_${timestamp}.${fileExt}`;  // ✅ Added =
-      const storagePath = `user_images/${uid}/${fileName}`;  // ✅ Added =
+      const fileName = `profile_${timestamp}.${fileExt}`;
+      const storagePath = `user_images/${uid}/${fileName}`;
+      console.log("✅ Upload path:", storagePath);
+      
       const storageRef = ref(storage, storagePath);
+      console.log("✅ Storage reference created");
       
-      console.log("Uploading to:", storagePath);
-      console.log("File size:", file.size, "bytes");
+      // Check 4: Verify auth before upload
+      const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+      const auth = getAuth();
+      console.log("Auth current user:", auth.currentUser?.uid);
+      console.log("Auth state:", auth.currentUser ? "signed in" : "NOT SIGNED IN");
       
+      if (!auth.currentUser) {
+        throw new Error("User not authenticated. Please log in again.");
+      }
+      
+      console.log("🚀 Starting upload...");
       const snapshot = await uploadBytes(storageRef, file);
-      console.log("Upload complete! Snapshot:", snapshot);
+      console.log("✅ Upload complete! Snapshot:", snapshot);
       
       const url = await getDownloadURL(snapshot.ref);
       updated.photoURL = url;
-      console.log("Photo URL obtained:", url);
+      console.log("✅ Photo URL obtained:", url);
     }
     
     console.log("Updating Firestore document...");
     await updateDoc(userRef, updated);
-    console.log("Firestore update complete!");
+    console.log("✅ Firestore update complete!");
     
     alert("Profile updated successfully!");
     closeEditModal();
@@ -488,18 +522,20 @@
     console.error("Error object:", err);
     console.error("Error code:", err.code);
     console.error("Error message:", err.message);
-    console.error("Stack trace:", err.stack);
+    console.error("Error stack:", err.stack);
     
     let errorMsg = "Error updating profile:\n\n";
     
     if (err.code === "storage/unauthorized" || err.message.includes("storage/unauthorized")) {
-      errorMsg += "❌ Storage permission denied.\n\nPlease check your Firebase Storage rules in the Firebase Console:\n1. Go to Storage → Rules\n2. Make sure user_images/{userId}/{allPaths=**} allows write for authenticated users";
+      errorMsg += "❌ Storage permission denied.\n\nYour authentication may have expired. Try:\n1. Log out\n2. Log back in\n3. Try uploading again";
     } else if (err.code === "permission-denied") {
       errorMsg += "❌ Firestore permission denied.\n\nCheck your Firestore security rules.";
     } else if (err.message.includes("Invalid file type")) {
       errorMsg += err.message;
-    } else {
+    } else if (err.message.includes("not authenticated")) {
       errorMsg += err.message;
+    } else {
+      errorMsg += err.message + "\n\nCheck console for details.";
     }
     
     alert(errorMsg);
