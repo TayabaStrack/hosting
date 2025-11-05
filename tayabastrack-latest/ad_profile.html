@@ -173,7 +173,8 @@
         </div>
     </aside>
 
-<nav class="navbar">
+<body>
+  <nav class="navbar">
     <div style="display:flex;align-items:center;gap:1rem;">
       <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fa fa-bars"></i></button>
       <h1>My Profile</h1>
@@ -364,6 +365,43 @@
     let trackedUserStatuses={};
     let trackedReportIds=new Set();
     let currentFilter="all";
+
+    // Load notifications from localStorage on startup
+    function loadNotificationsFromStorage() {
+      try {
+        const stored = localStorage.getItem('notificationsList');
+        const storedIds = localStorage.getItem('seenNotificationIds');
+        
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          notificationsList = parsed.map(n => ({
+            ...n,
+            timestamp: new Date(n.timestamp)
+          }));
+        }
+        
+        if (storedIds) {
+          seenNotificationIds = new Set(JSON.parse(storedIds));
+        }
+        
+        console.log(`Loaded ${notificationsList.length} notifications from storage`);
+      } catch (err) {
+        console.error('Error loading notifications:', err);
+      }
+    }
+
+    // Save notifications to localStorage
+    function saveNotificationsToStorage() {
+      try {
+        localStorage.setItem('notificationsList', JSON.stringify(notificationsList));
+        localStorage.setItem('seenNotificationIds', JSON.stringify([...seenNotificationIds]));
+      } catch (err) {
+        console.error('Error saving notifications:', err);
+      }
+    }
+
+    // Load notifications when page loads
+    loadNotificationsFromStorage();
     
     // Photo upload variables
     let selectedPhotoFile = null;
@@ -377,7 +415,7 @@
       return pos.includes("barangay")||pos.includes("brgy")||pos.includes("brgy.");
     }
 
-    function addNotification(type,message,detail){const cleanMsg=(message||"").trim();const cleanDetail=(detail||"").trim();const timestamp=new Date();const id=`${type}-${cleanMsg}-${cleanDetail}-${timestamp.getTime()}`;if(seenNotificationIds.has(id))return;seenNotificationIds.add(id);notificationsList.unshift({id,type,message:cleanMsg,detail:cleanDetail,timestamp:timestamp,read:false});updateNotificationUI()}
+    function addNotification(type,message,detail){const cleanMsg=(message||"").trim();const cleanDetail=(detail||"").trim();const timestamp=new Date();const id=`${type}-${cleanMsg}-${cleanDetail}-${timestamp.getTime()}`;if(seenNotificationIds.has(id))return;seenNotificationIds.add(id);notificationsList.unshift({id,type,message:cleanMsg,detail:cleanDetail,timestamp:timestamp,read:false});saveNotificationsToStorage();updateNotificationUI()}
 
     function updateNotificationUI(){let filtered=[...notificationsList];if(currentFilter==="report"){filtered=filtered.filter((n)=>n.type==="report")}else if(currentFilter==="user"){filtered=filtered.filter((n)=>n.type==="user")}else if(currentFilter==="24h"){const ago=Date.now()-24*60*60*1000;filtered=filtered.filter((n)=>n.timestamp.getTime()>ago)}filtered.sort((a,b)=>b.timestamp.getTime()-a.timestamp.getTime());const unreadCount=notificationsList.filter(n=>!n.read).length;const notificationBadge=document.getElementById("notificationBadge");if(unreadCount>0){notificationBadge.textContent=unreadCount;notificationBadge.classList.add("show")}else{notificationBadge.textContent="";notificationBadge.classList.remove("show")}const notificationList=document.getElementById("notificationList");if(filtered.length===0){notificationList.innerHTML='<div class="notification-empty">No notifications</div>'}else{notificationList.innerHTML=filtered.map((n)=>`<div class="notification-item ${n.read?'':'unread'}"><div class="notification-icon ${n.type}">${n.type==="user"?'<i class="fa fa-user"></i>':'<i class="fa fa-flag"></i>'}</div><div class="notification-content"><p><strong>${n.message}</strong></p><p>${n.detail}</p><span class="time">${n.timestamp.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span></div></div>`).join("")}}
 
@@ -387,12 +425,85 @@
     const markAllReadBtn=document.getElementById("markAllReadBtn");
 
     notificationBell.addEventListener("click",(e)=>{e.stopPropagation();notificationMenu.classList.toggle("show");document.getElementById("dropdownMenu").classList.remove("show")});
-    clearNotificationsBtn.addEventListener("click",()=>{notificationsList=[];seenNotificationIds.clear();updateNotificationUI()});
-    markAllReadBtn.addEventListener("click",()=>{notificationsList.forEach(n=>n.read=true);updateNotificationUI()});
+    clearNotificationsBtn.addEventListener("click",()=>{notificationsList=[];seenNotificationIds.clear();saveNotificationsToStorage();updateNotificationUI()});
+    markAllReadBtn.addEventListener("click",()=>{notificationsList.forEach(n=>n.read=true);saveNotificationsToStorage();updateNotificationUI()});
 
     document.querySelectorAll(".filter-btn").forEach((btn)=>{btn.addEventListener("click",(e)=>{document.querySelectorAll(".filter-btn").forEach((b)=>b.classList.remove("active"));e.target.classList.add("active");currentFilter=e.target.dataset.filter;updateNotificationUI()})});
 
-    async function setupRealtimeNotifications(db){const{collection,getDocs,onSnapshot}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");const userSnap=await getDocs(collection(db,"users"));userSnap.forEach((docSnap)=>{const userId=docSnap.id;const data=docSnap.data();const status=normalizeStatus(data.status);trackedUserStatuses[userId]=status});onSnapshot(collection(db,"users"),(snapshot)=>{snapshot.docChanges().forEach((change)=>{const userId=change.doc.id;const data=change.doc.data();const currentStatus=normalizeStatus(data.status);const fullName=data.name||`${data.firstName||""} ${data.lastName||""}`.trim()||"Unknown User";const position=data.position||"User";if(change.type==="added"){trackedUserStatuses[userId]=currentStatus;if(currentStatus==="active"&&isBarangayPosition(position)){addNotification("user",`New user approved: ${fullName}`,`Position: ${position}`)}}if(change.type==="modified"){const oldStatus=trackedUserStatuses[userId];if(oldStatus!=="active"&&currentStatus==="active"&&isBarangayPosition(position)){addNotification("user",`User approved: ${fullName}`,`Position: ${position}`)}trackedUserStatuses[userId]=currentStatus}})});const reportSnap=await getDocs(collection(db,"reports"));reportSnap.forEach((docSnap)=>{trackedReportIds.add(docSnap.id)});onSnapshot(collection(db,"reports"),(snapshot)=>{snapshot.docChanges().forEach((change)=>{const id=change.doc.id;const data=change.doc.data();if(change.type==="added"&&!trackedReportIds.has(id)){trackedReportIds.add(id);const barangay=data.barangay||data.location||"Unknown location";const type=data.reportType||data.type||data.projectName||"Report";addNotification("report","New report submitted",`${type} in ${barangay}`)}})});updateNotificationUI()}
+    async function setupRealtimeNotifications(db){
+      const{collection,getDocs,onSnapshot,query,orderBy,limit}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      
+      // Load tracked report IDs from localStorage
+      try {
+        const storedReportIds = localStorage.getItem('trackedReportIds');
+        if (storedReportIds) {
+          trackedReportIds = new Set(JSON.parse(storedReportIds));
+          console.log(`Loaded ${trackedReportIds.size} tracked report IDs from storage`);
+        }
+      } catch (err) {
+        console.error('Error loading tracked reports:', err);
+      }
+      
+      const userSnap=await getDocs(collection(db,"users"));
+      userSnap.forEach((docSnap)=>{
+        const userId=docSnap.id;
+        const data=docSnap.data();
+        const status=normalizeStatus(data.status);
+        trackedUserStatuses[userId]=status
+      });
+      
+      onSnapshot(collection(db,"users"),(snapshot)=>{
+        snapshot.docChanges().forEach((change)=>{
+          const userId=change.doc.id;
+          const data=change.doc.data();
+          const currentStatus=normalizeStatus(data.status);
+          const fullName=data.name||`${data.firstName||""} ${data.lastName||""}`.trim()||"Unknown User";
+          const position=data.position||"User";
+          
+          if(change.type==="added"){
+            trackedUserStatuses[userId]=currentStatus;
+            if(currentStatus==="active"&&isBarangayPosition(position)){
+              addNotification("user",`New user approved: ${fullName}`,`Position: ${position}`)
+            }
+          }
+          if(change.type==="modified"){
+            const oldStatus=trackedUserStatuses[userId];
+            if(oldStatus!=="active"&&currentStatus==="active"&&isBarangayPosition(position)){
+              addNotification("user",`User approved: ${fullName}`,`Position: ${position}`)
+            }
+            trackedUserStatuses[userId]=currentStatus
+          }
+        })
+      });
+      
+      // Only load reports that aren't already tracked
+      if (trackedReportIds.size === 0) {
+        const reportSnap=await getDocs(collection(db,"reports"));
+        reportSnap.forEach((docSnap)=>{
+          trackedReportIds.add(docSnap.id)
+        });
+        localStorage.setItem('trackedReportIds', JSON.stringify([...trackedReportIds]));
+        console.log(`Initial load: ${trackedReportIds.size} reports tracked`);
+      }
+      
+      onSnapshot(collection(db,"reports"),(snapshot)=>{
+        snapshot.docChanges().forEach((change)=>{
+          const id=change.doc.id;
+          const data=change.doc.data();
+          
+          if(change.type==="added"&&!trackedReportIds.has(id)){
+            trackedReportIds.add(id);
+            localStorage.setItem('trackedReportIds', JSON.stringify([...trackedReportIds]));
+            
+            const barangay=data.barangay||data.location||"Unknown location";
+            const type=data.reportType||data.type||data.projectName||"Report";
+            addNotification("report","New report submitted",`${type} in ${barangay}`)
+          }
+        })
+      });
+      
+      updateNotificationUI()
+    }
 
     function previousMonth(){selectedMonth--;if(selectedMonth<0){selectedMonth=11;selectedYear--}renderCalendar()}
     function nextMonth(){selectedMonth++;if(selectedMonth>11){selectedMonth=0;selectedYear++}renderCalendar()}
@@ -625,94 +736,39 @@
         await updateDoc(userRef, updated);
         console.log('Profile updated successfully!');
 
-// Success feedback
-alert("Profile updated successfully!");
+        alert("Profile updated successfully!");
+        
+        closeEditModal();
+        editPhoto.value = '';
+        selectedPhotoFile = null;
+        previewPhotoURL = null;
+        updateUploadProgress(0);
 
-// Reset form
-closeEditModal();
-editPhoto.value = '';
-selectedPhotoFile = null;
-previewPhotoURL = null;
+      } catch (err) {
+        console.error("Error updating profile:", err);
+        
+        let errorMsg = "Error updating profile:\n\n";
+        
+        if (err.code === "storage/unauthorized") {
+          errorMsg += "❌ Storage permission denied.\n\n";
+          errorMsg += "Firebase Storage rules need to be updated:\n";
+          errorMsg += "Go to Firebase Console → Storage → Rules\n";
+          errorMsg += "Add: allow write: if request.auth != null && request.auth.uid == userId;";
+        } else if (err.code === "permission-denied") {
+          errorMsg += "❌ Firestore permission denied.\n\nCheck your Firestore security rules.";
+        } else if (err.message.includes("quota")) {
+          errorMsg += "❌ Storage quota exceeded.\n\nPlease contact support.";
+        } else {
+          errorMsg += err.message;
+        }
+        
+        alert(errorMsg);
 
-} catch (err) {
-console.error("Error updating profile:", err);
-
-let errorMsg = "Error updating profile:\n\n";
-
-if (err.code === "storage/unauthorized") {
-errorMsg += "❌ Storage permission denied.\n\n";
-errorMsg += "Firebase Storage rules need to be updated:\n";
-errorMsg += "Go to Firebase Console → Storage → Rules\n";
-errorMsg += "Add: allow write: if request.auth != null && request.auth.uid == userId;";
-} else if (err.code === "permission-denied") {
-errorMsg += "❌ Firestore permission denied.\n\nCheck your Firestore security rules.";
-} else if (err.message.includes("quota")) {
-errorMsg += "❌ Storage quota exceeded.\n\nPlease contact support.";
-} else {
-errorMsg += err.message;
-}
-
-alert(errorMsg);
-
-} finally {
-saveBtn.disabled = false;
-saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Changes';
-updateUploadProgress(0); // Reset progress bar
-}
-};
-
-// ===== 7. OPTIONAL: REMOVE CURRENT PHOTO =====
-window.removeProfilePhoto = async function() {
-if (!confirm('Remove your profile photo? Your profile will show the default avatar.')) {
-return;
-}
-
-try {
-const { updateDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-const uid = currentUser.uid;
-const userRef = doc(window.db, "users", uid);
-
-await updateDoc(userRef, { photoURL: '' });
-
-// Reset preview to default
-previewImg.src = 'image.png';
-selectedPhotoFile = null;
-editPhoto.value = '';
-
-alert('Profile photo removed');
-} catch (err) {
-console.error('Error removing photo:', err);
-alert('Error removing photo: ' + err.message);
-}
-};
-
-// ===== 8. DRAG & DROP (BONUS) =====
-const dropZone = document.getElementById('photoDropZone'); // Add this element in HTML
-
-if (dropZone) {
-dropZone.addEventListener('dragover', (e) => {
-e.preventDefault();
-dropZone.classList.add('drag-over');
-});
-
-dropZone.addEventListener('dragleave', () => {
-dropZone.classList.remove('drag-over');
-});
-
-dropZone.addEventListener('drop', async (e) => {
-e.preventDefault();
-dropZone.classList.remove('drag-over');
-
-const file = e.dataTransfer.files[0];
-if (file && file.type.startsWith('image/')) {
-// Simulate file input change
-const dataTransfer = new DataTransfer();
-dataTransfer.items.add(file);
-editPhoto.files = dataTransfer.files;
-editPhoto.dispatchEvent(new Event('change'));
-}
-});
-}
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Changes';
+      }
+    };
 
     window.addEventListener("click",(e)=>{if(e.target===editModal)closeEditModal()});
 </script>
