@@ -173,8 +173,7 @@
         </div>
     </aside>
 
-<body>
-  <nav class="navbar">
+ <nav class="navbar">
     <div style="display:flex;align-items:center;gap:1rem;">
       <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fa fa-bars"></i></button>
       <h1>My Profile</h1>
@@ -629,6 +628,7 @@
         alert('Error processing image. Please try another file.');
         editPhoto.value = '';
         previewImg.style.opacity = '1';
+        selectedPhotoFile = null;
       }
     });
 
@@ -652,40 +652,27 @@
       }
     }
 
-    // ===== UPLOAD PHOTO TO FIREBASE =====
+    // ===== UPLOAD PHOTO TO FIREBASE (MATCHING AFTER REPORTS METHOD) =====
     async function uploadProfilePhoto(userId, file) {
-      const { getStorage, ref, uploadBytesResumable, getDownloadURL } = 
+      const { getStorage, ref, uploadBytes, getDownloadURL } = 
         await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js");
       
       const storage = getStorage();
-      const timestamp = Date.now();
-      const fileName = `profile_${timestamp}.jpg`;
+      const fileName = `profile_${Date.now()}.jpg`;
       const storagePath = `user_images/${userId}/${fileName}`;
       const storageRef = ref(storage, storagePath);
 
-      return new Promise((resolve, reject) => {
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            updateUploadProgress(progress);
-            console.log(`Upload progress: ${progress.toFixed(0)}%`);
-          },
-          (error) => {
-            console.error('Upload error:', error);
-            reject(error);
-          },
-          async () => {
-            try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            } catch (err) {
-              reject(err);
-            }
-          }
-        );
-      });
+      console.log('Uploading to path:', storagePath);
+      
+      // Upload file (same as after reports)
+      const snapshot = await uploadBytes(storageRef, file);
+      console.log('Upload complete! Snapshot:', snapshot);
+      
+      // Get download URL
+      const url = await getDownloadURL(snapshot.ref);
+      console.log('Download URL:', url);
+      
+      return url;
     }
 
     // ===== SAVE PROFILE WITH PHOTO =====
@@ -719,17 +706,12 @@
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
 
-        // Upload photo if selected
+        // Upload photo if selected (same as after reports method)
         if (selectedPhotoFile) {
           console.log('Uploading photo...');
           const photoURL = await uploadProfilePhoto(uid, selectedPhotoFile);
           updated.photoURL = photoURL;
           console.log('Photo uploaded successfully:', photoURL);
-          
-          // Update all images immediately with new photo
-          document.getElementById('profilePic').src = photoURL;
-          document.getElementById('navAvatar').src = photoURL;
-          document.getElementById('previewImg').src = photoURL;
         }
 
         console.log('Updating profile data...');
@@ -742,22 +724,19 @@
         editPhoto.value = '';
         selectedPhotoFile = null;
         previewPhotoURL = null;
-        updateUploadProgress(0);
 
       } catch (err) {
         console.error("Error updating profile:", err);
+        console.error("Error code:", err.code);
+        console.error("Error message:", err.message);
         
         let errorMsg = "Error updating profile:\n\n";
         
         if (err.code === "storage/unauthorized") {
           errorMsg += "❌ Storage permission denied.\n\n";
-          errorMsg += "Firebase Storage rules need to be updated:\n";
-          errorMsg += "Go to Firebase Console → Storage → Rules\n";
-          errorMsg += "Add: allow write: if request.auth != null && request.auth.uid == userId;";
+          errorMsg += "Please check Firebase Storage rules.";
         } else if (err.code === "permission-denied") {
           errorMsg += "❌ Firestore permission denied.\n\nCheck your Firestore security rules.";
-        } else if (err.message.includes("quota")) {
-          errorMsg += "❌ Storage quota exceeded.\n\nPlease contact support.";
         } else {
           errorMsg += err.message;
         }
