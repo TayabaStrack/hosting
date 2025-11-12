@@ -1,10 +1,10 @@
-[debug] [2025-11-05T02:54:15.847Z] ----------------------------------------------------------------------
-[debug] [2025-11-05T02:54:15.851Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Muchie\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
-[debug] [2025-11-05T02:54:15.851Z] CLI Version:   14.23.0
-[debug] [2025-11-05T02:54:15.851Z] Platform:      win32
-[debug] [2025-11-05T02:54:15.852Z] Node Version:  v22.20.0
-[debug] [2025-11-05T02:54:15.852Z] Time:          Wed Nov 05 2025 10:54:15 GMT+0800 (Singapore Standard Time)
-[debug] [2025-11-05T02:54:15.852Z] ----------------------------------------------------------------------
+[debug] [2025-11-12T14:46:23.709Z] ----------------------------------------------------------------------
+[debug] [2025-11-12T14:46:23.734Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Muchie\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-11-12T14:46:23.736Z] CLI Version:   14.23.0
+[debug] [2025-11-12T14:46:23.736Z] Platform:      win32
+[debug] [2025-11-12T14:46:23.737Z] Node Version:  v22.20.0
+[debug] [2025-11-12T14:46:23.738Z] Time:          Wed Nov 12 2025 22:46:23 GMT+0800 (Singapore Standard Time)
+[debug] [2025-11-12T14:46:23.739Z] ----------------------------------------------------------------------
 [debug] 
 [info] 
      ######## #### ########  ######## ########     ###     ######  ########
@@ -21,33 +21,3 @@ Before we get started, keep in mind:
 
   * You are initializing within an existing Firebase project directory
 
-[info] 
-=== Project Setup
-[info] 
-[info] First, let's associate this project directory with a Firebase project.
-[info] You can create multiple project aliases by running firebase use --add, 
-[info] 
-[debug] [2025-11-05T02:54:20.308Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-11-05T02:54:20.309Z] > authorizing via signed-in user (tayabastrack@gmail.com)
-[debug] [2025-11-05T02:54:20.311Z] Checked if tokens are valid: true, expires at: 1762313885820
-[debug] [2025-11-05T02:54:20.311Z] Checked if tokens are valid: true, expires at: 1762313885820
-[debug] [2025-11-05T02:54:20.314Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tayabastrack-23b95 [none]
-[debug] [2025-11-05T02:54:20.663Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tayabastrack-23b95 200
-[debug] [2025-11-05T02:54:20.663Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tayabastrack-23b95 {"projectId":"tayabastrack-23b95","projectNumber":"674055915366","displayName":"TayabaStrack","name":"projects/tayabastrack-23b95","resources":{"hostingSite":"tayabastrack-23b95"},"state":"ACTIVE","etag":"1_ef3beabb-0932-493f-b3ca-83df87de7952"}
-[info] i  Using project tayabastrack-23b95 (TayabaStrack) . 
-[info] 
-=== Hosting Setup
-[debug] [2025-11-05T02:54:20.683Z] Checked if tokens are valid: true, expires at: 1762313885820
-[debug] [2025-11-05T02:54:20.683Z] Checked if tokens are valid: true, expires at: 1762313885820
-[debug] [2025-11-05T02:54:20.684Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tayabastrack-23b95 [none]
-[debug] [2025-11-05T02:54:20.941Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tayabastrack-23b95 200
-[debug] [2025-11-05T02:54:20.941Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tayabastrack-23b95 {"projectId":"tayabastrack-23b95","projectNumber":"674055915366","displayName":"TayabaStrack","name":"projects/tayabastrack-23b95","resources":{"hostingSite":"tayabastrack-23b95"},"state":"ACTIVE","etag":"1_ef3beabb-0932-493f-b3ca-83df87de7952"}
-[info] 
-[info] Your public directory is the folder (relative to your project directory) that
-[info] will contain Hosting assets to be uploaded with firebase deploy. If you
-[info] have a build process for your assets, use your build's output directory.
-[info] 
-[info] i  ./404.html is unchanged 
-[debug] [2025-11-05T02:54:25.878Z] >>> [apiv2][query] GET https://www.gstatic.com/firebasejs/releases.json [none]
-[debug] [2025-11-05T02:54:25.951Z] <<< [apiv2][status] GET https://www.gstatic.com/firebasejs/releases.json 200
-[debug] [2025-11-05T02:54:25.951Z] <<< [apiv2][body] GET https://www.gstatic.com/firebasejs/releases.json {"current":{"version":"12.5.0","browserURL":"https://www.gstatic.com/firebasejs/12.5.0/firebase.js","packageURL":"https://www.gstatic.com/firebasejs/12.5.0/firebase.tgz"},"live":{"version":"12.5","browserURL":"https://www.gstatic.com/firebasejs/live/12.5/firebase.js","packageURL":"https://www.gstatic.com/firebasejs/live/12.5/firebase.tgz"},"components":{"ai":"https://www.gstatic.com/firebasejs/12.5.0/firebase-ai.js","analytics":"https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js","app":"https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js","app-check":"https://www.gstatic.com/firebasejs/12.5.0/firebase-app-check.js","auth":"https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js","auth/cordova":"https://www.gstatic.com/firebasejs/12.5.0/firebase-auth/cordova.js","auth/web-extension":"https://www.gstatic.com/firebasejs/12.5.0/firebase-auth/web-extension.js","functions":"https://www.gstatic.com/firebasejs/12.5.0/firebase-functions.js","firestore":"https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js","firestore/lite":"https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore/lite.js","installations":"https://www.gstatic.com/firebasejs/12.5.0/firebase-installations.js","storage":"https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js","performance":"https://www.gstatic.com/firebasejs/12.5.0/firebase-performance.js","remote-config":"https://www.gstatic.com/firebasejs/12.5.0/firebase-remote-config.js","messaging":"https://www.gstatic.com/firebasejs/12.5.0/firebase-messaging.js","messaging/sw":"https://www.gstatic.com/firebasejs/12.5.0/firebase-messaging/sw.js","database":"https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js","data-connect":"https://www.gstatic.com/firebasejs/12.5.0/firebase-data-connect.js","firestore.memory":"https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.memory.js"}}
