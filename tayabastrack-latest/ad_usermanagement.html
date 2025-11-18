@@ -617,7 +617,7 @@
     function isBarangayPosition(p){
       if(!p) return false;
       const pos = p.toLowerCase().trim();
-      return pos.includes("barangay") || pos.includes("brgy") || pos.includes("brgy.") || pos.includes("sk kagawad");
+      return pos.includes("barangay") || pos.includes("brgy") || pos.includes("brgy.") || pos.includes("sk");
     }
 
     function renderTable(tbody, users, actionType){
