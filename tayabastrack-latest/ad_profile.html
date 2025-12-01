@@ -241,7 +241,6 @@
                 <li><a href="ad_map.html"><i class="fa fa-map-marker-alt"></i> Map</a></li>
                 <li><a href="ad_usermanagement.html"><i class="fa fa-users"></i> User Management</a></li>
                 <li><a href="ad_bulletin.html"><i class="fa fa-bullhorn"></i> Report Bulletin</a></li>
-                <li><a href="ad_auditlogs.html"><i class="fa fa-clipboard-list"></i>&nbsp; Audit Logs</a></li>
             </ul>
         </div>
         <div class="sidebar-footer">
@@ -1017,7 +1016,7 @@
         }
         
         await signOut(auth);
-        window.location.href = "logout.html";
+        window.location.href = "login.html";
       } catch(err) {
         alert("Error logging out: " + err.message);
       }
@@ -1028,7 +1027,7 @@
     onAuthStateChanged(auth, async(user)=>{
       if(!user) {
         console.warn("No user logged in.");
-        window.location.href="logout.html";
+        window.location.href="login.html";
         return;
       }
       
