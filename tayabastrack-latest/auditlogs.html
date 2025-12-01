@@ -11,199 +11,944 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; min-height: 100vh; background: #f5f7fb; color: #333; overflow-x: hidden; }
 
-        .sidebar { width: 240px; background: #004aad; color: #fff; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem 0; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; height: 100vh; overflow-y: auto; transition: left 0.3s; }
-        .sidebar-header { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 2rem; padding: 0 1rem; }
+        /* ===== SIDEBAR ===== */
+        .sidebar { 
+            width: 240px; 
+            background: #004aad; 
+            color: #fff; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            padding: 1rem 0; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            bottom: 0; 
+            z-index: 50; 
+            height: 100vh; 
+            overflow-y: auto; 
+            transition: left 0.3s ease; 
+        }
+        .sidebar-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-start; 
+            gap: 12px; 
+            margin-bottom: 2rem; 
+            padding: 0 1rem; 
+        }
         .sidebar-header img { width: 50px; height: 50px; object-fit: contain; }
         .sidebar-header h2 { font-size: 1.3rem; font-weight: 600; }
         .sidebar-menu { list-style: none; padding: 0; }
         .sidebar-menu li { margin: 0.5rem 0; }
-        .sidebar-menu a { display: flex; align-items: center; gap: 10px; padding: 0.8rem 1.5rem; text-decoration: none; color: #fff; transition: background 0.3s; border-left: 4px solid transparent; }
-        .sidebar-menu li.active a, .sidebar-menu a:hover { background: #0756cc; border-left: 4px solid #042f68; }
+        .sidebar-menu a { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            padding: 0.8rem 1.5rem; 
+            text-decoration: none; 
+            color: #fff; 
+            transition: background 0.3s; 
+            border-left: 4px solid transparent; 
+        }
+        .sidebar-menu li.active a, 
+        .sidebar-menu a:hover { 
+            background: #0756cc; 
+            border-left: 4px solid #042f68; 
+        }
         
-        /* ✅ IMPROVED SUBMENU STYLING */
+        /* ===== SUBMENU ===== */
         .sidebar-submenu {
-          list-style: none;
-          padding-left: 0;
-          margin: 0;
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.3s ease;
-          background: rgba(0, 0, 0, 0.1);
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(0, 0, 0, 0.1);
         }
         .sidebar-submenu.open {
-          max-height: 500px;
+            max-height: 500px;
         }
         .sidebar-submenu li {
-          margin: 0;
+            margin: 0;
         }
         .sidebar-submenu a {
-          padding: 0.6rem 1.5rem 0.6rem 3rem !important;
-          font-size: 0.9rem;
-          border-left: 4px solid transparent;
+            padding: 0.6rem 1.5rem 0.6rem 3rem !important;
+            font-size: 0.9rem;
+            border-left: 4px solid transparent;
         }
         .sidebar-submenu li.active a {
-          background: #042f68;
-          border-left: 4px solid #fff;
+            background: #042f68;
+            border-left: 4px solid #fff;
         }
         .has-submenu > a {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .has-submenu > a .fa-chevron-down {
-          transition: transform 0.3s ease;
-          margin-left: auto;
+            transition: transform 0.3s ease;
+            margin-left: auto;
         }
 
-        .sidebar-footer { text-align: center; padding: 1rem; border-top: 1px solid rgba(255,255,255,0.2); }
-        .logout-btn { background-color: #d9534f; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.3s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .sidebar-footer { 
+            text-align: center; 
+            padding: 1rem; 
+            border-top: 1px solid rgba(255,255,255,0.2); 
+        }
+        .logout-btn { 
+            background-color: #d9534f; 
+            color: #fff; 
+            border: none; 
+            padding: 0.6rem 1.2rem; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 500; 
+            transition: background 0.3s; 
+            width: 100%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+        }
         .logout-btn:hover { background-color: #c9302c; }
 
-        .main { flex: 1; display: flex; flex-direction: column; margin-left: 240px; transition: margin-left 0.3s; }
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
-        .navbar h1 { font-size: 1.4rem; color: #004aad; }
-        .navbar-left { display: flex; align-items: center; gap: 1rem; }
-        .mobile-menu-btn { display: none; background: none; border: none; color: #004aad; font-size: 1.5rem; cursor: pointer; padding: 0.5rem; }
+        /* ===== MAIN CONTENT ===== */
+        .main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            margin-left: 240px; 
+            transition: margin-left 0.3s ease; 
+            width: calc(100% - 240px);
+        }
         
-        .profile { display: flex; align-items: center; gap: 1rem; }
-        .fa-bell { font-size: 1.2rem; position: relative; cursor: pointer; color: #333; }
-        .badge { background: red; color: #fff; font-size: 0.7rem; border-radius: 50%; padding: 3px 6px; position: absolute; top: -8px; right: -8px; display: none; min-width: 18px; text-align: center; }
-        .badge.show { display: flex; align-items: center; justify-content: center; }
+        /* ===== NAVBAR ===== */
+        .navbar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 1rem 2rem; 
+            background: #fff; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+        }
+        .navbar h1 { 
+            font-size: 1.4rem; 
+            color: #004aad; 
+        }
+        .navbar-left { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+        }
+        .mobile-menu-btn { 
+            display: none; 
+            background: none; 
+            border: none; 
+            color: #004aad; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            padding: 0.5rem; 
+        }
+        
+        .profile { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+        }
+        .fa-bell { 
+            font-size: 1.2rem; 
+            position: relative; 
+            cursor: pointer; 
+            color: #333; 
+        }
+        .badge { 
+            background: red; 
+            color: #fff; 
+            font-size: 0.7rem; 
+            border-radius: 50%; 
+            padding: 3px 6px; 
+            position: absolute; 
+            top: -8px; 
+            right: -8px; 
+            display: none; 
+            min-width: 18px; 
+            text-align: center; 
+        }
+        .badge.show { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
 
-        .profile-dropdown { position: relative; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: background 0.2s; }
+        .profile-dropdown { 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            cursor: pointer; 
+            padding: 0.5rem; 
+            border-radius: 8px; 
+            transition: background 0.2s; 
+        }
         .profile-dropdown:hover { background: #f5f7fb; }
-        .avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #004aad; }
-        .username { font-weight: 500; color: #333; }
+        .avatar { 
+            width: 35px; 
+            height: 35px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 2px solid #004aad; 
+        }
+        .username { 
+            font-weight: 500; 
+            color: #333; 
+        }
         
-        .notification-menu { display: none; position: absolute; top: 120%; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); width: 340px; max-height: 420px; overflow: hidden; z-index: 1000; font-family: "Segoe UI", Tahoma, sans-serif; animation: fadeIn 0.2s ease-in-out; }
+        /* ===== NOTIFICATIONS ===== */
+        .notification-menu { 
+            display: none; 
+            position: absolute; 
+            top: 120%; 
+            right: 0; 
+            background: #fff; 
+            border: 1px solid #ddd; 
+            border-radius: 10px; 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); 
+            width: 340px; 
+            max-height: 420px; 
+            overflow: hidden; 
+            z-index: 1000; 
+            animation: fadeIn 0.2s ease-in-out; 
+        }
         .notification-menu.show { display: block; }
 
-        .notification-header { padding: 0.9rem 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; }
-        .notification-header h3 { font-size: 1rem; color: #333; margin: 0; font-weight: 600; }
-        .notification-actions { display: flex; gap: 0.5rem; align-items: center; }
-        .action-icon-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 1rem; padding: 0.3rem; transition: color 0.2s ease; display: flex; align-items: center; justify-content: center; }
+        .notification-header { 
+            padding: 0.9rem 1rem; 
+            border-bottom: 1px solid #eee; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #f9f9f9; 
+        }
+        .notification-header h3 { 
+            font-size: 1rem; 
+            color: #333; 
+            margin: 0; 
+            font-weight: 600; 
+        }
+        .notification-actions { 
+            display: flex; 
+            gap: 0.5rem; 
+            align-items: center; 
+        }
+        .action-icon-btn { 
+            background: none; 
+            border: none; 
+            color: #666; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            padding: 0.3rem; 
+            transition: color 0.2s ease; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
         .action-icon-btn:hover { color: #004aad; }
         .action-icon-btn i { font-size: 0.95rem; }
 
-        .notification-filters { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.5rem 1rem; border-bottom: 1px solid #eee; background: #fafafa; }
-        .filter-btn-notif { flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: #f2f2f2; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.25s ease; color: #333; }
-        .filter-btn-notif:hover { background: #004aad; color: #fff; }
-        .filter-btn-notif.active { background: #004aad; color: #fff; border-color: #004aad; }
+        .notification-filters { 
+            display: flex; 
+            justify-content: space-between; 
+            gap: 0.5rem; 
+            padding: 0.5rem 1rem; 
+            border-bottom: 1px solid #eee; 
+            background: #fafafa; 
+        }
+        .filter-btn-notif { 
+            flex: 1; 
+            padding: 0.4rem 0.6rem; 
+            font-size: 0.8rem; 
+            background: #f2f2f2; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: all 0.25s ease; 
+            color: #333; 
+        }
+        .filter-btn-notif:hover { 
+            background: #004aad; 
+            color: #fff; 
+        }
+        .filter-btn-notif.active { 
+            background: #004aad; 
+            color: #fff; 
+            border-color: #004aad; 
+        }
 
-        .notification-list { max-height: 300px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ccc transparent; }
+        .notification-list { 
+            max-height: 300px; 
+            overflow-y: auto; 
+            scrollbar-width: thin; 
+            scrollbar-color: #ccc transparent; 
+        }
         .notification-list::-webkit-scrollbar { width: 6px; }
-        .notification-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .notification-list::-webkit-scrollbar-thumb { 
+            background: #ccc; 
+            border-radius: 10px; 
+        }
         .notification-list::-webkit-scrollbar-track { background: transparent; }
 
-        .notification-item { padding: 0.8rem 1rem; border-bottom: 1px solid #f0f0f0; display: flex; gap: 0.8rem; align-items: flex-start; transition: background 0.2s; position: relative; }
+        .notification-item { 
+            padding: 0.8rem 1rem; 
+            border-bottom: 1px solid #f0f0f0; 
+            display: flex; 
+            gap: 0.8rem; 
+            align-items: flex-start; 
+            transition: background 0.2s; 
+            position: relative; 
+        }
         .notification-item:hover { background: #f5f7ff; }
         .notification-item.unread { background: #f0f7ff; }
-        .notification-item.unread::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 4px; height: 60%; background: #004aad; border-radius: 0 4px 4px 0; }
-        .notification-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1rem; }
-        .notification-icon.user { background: #e3f2fd; color: #1976d2; }
-        .notification-icon.report { background: #fff3e0; color: #f57c00; }
+        .notification-item.unread::before { 
+            content: ''; 
+            position: absolute; 
+            left: 0; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            width: 4px; 
+            height: 60%; 
+            background: #004aad; 
+            border-radius: 0 4px 4px 0; 
+        }
+        .notification-icon { 
+            width: 38px; 
+            height: 38px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-shrink: 0; 
+            font-size: 1rem; 
+        }
+        .notification-icon.user { 
+            background: #e3f2fd; 
+            color: #1976d2; 
+        }
+        .notification-icon.report { 
+            background: #fff3e0; 
+            color: #f57c00; 
+        }
         .notification-content { flex: 1; }
-        .notification-content p { margin: 0; font-size: 0.86rem; color: #333; line-height: 1.3; }
-        .notification-content .time { color: #999; font-size: 0.75rem; margin-top: 0.25rem; }
-        .notification-empty { padding: 2rem; text-align: center; color: #999; font-size: 0.9rem; }
+        .notification-content p { 
+            margin: 0; 
+            font-size: 0.86rem; 
+            color: #333; 
+            line-height: 1.3; 
+        }
+        .notification-content .time { 
+            color: #999; 
+            font-size: 0.75rem; 
+            margin-top: 0.25rem; 
+        }
+        .notification-empty { 
+            padding: 2rem; 
+            text-align: center; 
+            color: #999; 
+            font-size: 0.9rem; 
+        }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(-5px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
 
-        .dropdown-menu { display: none; position: absolute; top: 120%; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); min-width: 160px; z-index: 1000; }
+        .dropdown-menu { 
+            display: none; 
+            position: absolute; 
+            top: 120%; 
+            right: 0; 
+            background: #fff; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
+            min-width: 160px; 
+            z-index: 1000; 
+        }
         .dropdown-menu.show { display: block; }
-        .dropdown-menu a { display: block; padding: 0.6rem 1rem; text-decoration: none; color: #333; font-size: 0.85rem; transition: background 0.2s; }
-        .dropdown-menu a:hover { background: #f0f0f0; color: #004aad; }
-        .dropdown-menu a i { margin-right: 8px; width: 20px; text-align: center; }
+        .dropdown-menu a { 
+            display: block; 
+            padding: 0.6rem 1rem; 
+            text-decoration: none; 
+            color: #333; 
+            font-size: 0.85rem; 
+            transition: background 0.2s; 
+        }
+        .dropdown-menu a:hover { 
+            background: #f0f0f0; 
+            color: #004aad; 
+        }
+        .dropdown-menu a i { 
+            margin-right: 8px; 
+            width: 20px; 
+            text-align: center; 
+        }
 
-        .content { flex: 1; padding: 2rem; overflow-y: auto; background: #f5f7fb; }
+        /* ===== CONTENT AREA ===== */
+        .content { 
+            flex: 1; 
+            padding: 1.5rem; 
+            overflow-y: auto; 
+            background: #f5f7fb; 
+        }
         
-        .top-section { background: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .top-section { 
+            background: #fff; 
+            border-radius: 12px; 
+            padding: 1.5rem; 
+            margin-bottom: 1.5rem; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+        }
         
-        .filter-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        /* ===== FILTER BAR ===== */
+        .filter-bar { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+            margin-bottom: 1.5rem; 
+            flex-wrap: wrap; 
+        }
         .filter-item { position: relative; }
-        .filter-label { font-size: 0.9rem; font-weight: 600; color: #666; margin-right: 0.5rem; }
-        .date-filter { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; }
+        .filter-label { 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            color: #666; 
+            margin-right: 0.5rem; 
+        }
+        .date-filter { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            padding: 0.5rem 1rem; 
+            background: #fff; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            cursor: pointer; 
+        }
         .date-filter i { color: #999; }
-        .date-filter input { border: none; outline: none; font-size: 0.9rem; color: #333; background: transparent; }
+        .date-filter input { 
+            border: none; 
+            outline: none; 
+            font-size: 0.9rem; 
+            color: #333; 
+            background: transparent; 
+        }
         .dropdown-filter { position: relative; }
-        .dropdown-filter select { padding: 0.5rem 2.5rem 0.5rem 1rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem; background: #fff; cursor: pointer; appearance: none; color: #666; }
-        .dropdown-filter::after { content: '\f078'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: #999; font-size: 0.7rem; }
-        .action-btn { padding: 0.6rem 1.2rem; background: #4a90e2; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-left: auto; }
-        .action-btn:hover { background: #357abd; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3); }
+        .dropdown-filter select { 
+            padding: 0.5rem 2.5rem 0.5rem 1rem; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            font-size: 0.9rem; 
+            background: #fff; 
+            cursor: pointer; 
+            appearance: none; 
+            color: #666; 
+        }
+        .dropdown-filter::after { 
+            content: '\f078'; 
+            font-family: 'Font Awesome 6 Free'; 
+            font-weight: 900; 
+            position: absolute; 
+            right: 1rem; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            pointer-events: none; 
+            color: #999; 
+            font-size: 0.7rem; 
+        }
+        .action-btn { 
+            padding: 0.6rem 1.2rem; 
+            background: #4a90e2; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            margin-left: auto; 
+        }
+        .action-btn:hover { 
+            background: #357abd; 
+            transform: translateY(-1px); 
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3); 
+        }
         .action-btn i { margin-right: 0.5rem; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-circle { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .circle-wrapper { position: relative; width: 120px; height: 120px; }
-        .circle-bg { width: 120px; height: 120px; border-radius: 50%; background: #f0f3f7; display: flex; align-items: center; justify-content: center; position: relative; }
-        .circle-progress { position: absolute; top: 0; left: 0; width: 120px; height: 120px; }
-        .circle-number { font-size: 2rem; font-weight: 700; color: #333; position: relative; z-index: 2; }
-        .circle-label { margin-top: 0.75rem; font-size: 0.9rem; color: #666; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; }
-        .circle-dot { width: 8px; height: 8px; border-radius: 50%; }
+        /* ===== STATS CIRCLES ===== */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 1.5rem; 
+            margin-bottom: 2rem; 
+        }
+        .stat-circle { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+        }
+        .circle-wrapper { 
+            position: relative; 
+            width: 100px; 
+            height: 100px; 
+        }
+        .circle-bg { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            background: #f0f3f7; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+        }
+        .circle-progress { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100px; 
+            height: 100px; 
+        }
+        .circle-number { 
+            font-size: 1.6rem; 
+            font-weight: 700; 
+            color: #333; 
+            position: relative; 
+            z-index: 2; 
+        }
+        .circle-label { 
+            margin-top: 0.75rem; 
+            font-size: 0.85rem; 
+            color: #666; 
+            font-weight: 500; 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            text-align: center;
+        }
+        .circle-dot { 
+            width: 8px; 
+            height: 8px; 
+            border-radius: 50%; 
+        }
 
-        .logs-section { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        /* ===== LOGS SECTION ===== */
+        .logs-section { 
+            background: #fff; 
+            border-radius: 12px; 
+            padding: 1.5rem; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+        }
         
-        .search-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e0e0e0; }
-        .search-input-wrapper { flex: 1; position: relative; }
-        .search-input-wrapper i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #999; }
-        .search-input-wrapper input { width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem; }
-        .search-input-wrapper input:focus { outline: none; border-color: #4a90e2; }
-        .pagination-text { font-size: 0.9rem; color: #666; white-space: nowrap; }
+        .search-bar { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+            margin-bottom: 1.5rem; 
+            padding-bottom: 1rem; 
+            border-bottom: 1px solid #e0e0e0; 
+            flex-wrap: wrap;
+        }
+        .search-input-wrapper { 
+            flex: 1; 
+            position: relative; 
+            min-width: 200px;
+        }
+        .search-input-wrapper i { 
+            position: absolute; 
+            left: 1rem; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            color: #999; 
+        }
+        .search-input-wrapper input { 
+            width: 100%; 
+            padding: 0.7rem 1rem 0.7rem 2.5rem; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            font-size: 0.9rem; 
+        }
+        .search-input-wrapper input:focus { 
+            outline: none; 
+            border-color: #4a90e2; 
+        }
+        .pagination-text { 
+            font-size: 0.9rem; 
+            color: #666; 
+            white-space: nowrap; 
+        }
 
-        .logs-table-wrapper { overflow-x: auto; }
-        .logs-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .logs-table thead th { background: transparent; padding: 0.75rem 1rem; text-align: left; font-size: 0.85rem; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e0e0e0; }
+        /* ===== TABLE WITH HORIZONTAL PAGINATION ===== */
+        .logs-table-wrapper { 
+            overflow-x: auto; 
+            position: relative;
+            border-radius: 8px;
+        }
+        
+        /* Horizontal scroll pagination */
+        .table-scroll-container {
+            position: relative;
+        }
+        
+        .table-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(74, 144, 226, 0.9);
+            color: #fff;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .table-nav-btn:hover {
+            background: rgba(53, 122, 189, 0.95);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .table-nav-btn.left {
+            left: 10px;
+        }
+        
+        .table-nav-btn.right {
+            right: 10px;
+        }
+        
+        .table-nav-btn.show {
+            display: flex;
+        }
+        
+        .logs-table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0; 
+            min-width: 900px;
+        }
+        .logs-table thead th { 
+            background: #fafafa; 
+            padding: 0.75rem 1rem; 
+            text-align: left; 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            color: #999; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            border-bottom: 2px solid #e0e0e0; 
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
         .logs-table thead th:first-child { padding-left: 1.5rem; }
-        .logs-table tbody tr { transition: background 0.2s; border-bottom: 1px solid #f0f0f0; }
+        .logs-table tbody tr { 
+            transition: background 0.2s; 
+            border-bottom: 1px solid #f0f0f0; 
+        }
         .logs-table tbody tr:hover { background: #f8f9fb; }
-        .logs-table tbody td { padding: 1rem; font-size: 0.9rem; vertical-align: middle; }
+        .logs-table tbody td { 
+            padding: 1rem; 
+            font-size: 0.9rem; 
+            vertical-align: middle; 
+        }
         .logs-table tbody td:first-child { padding-left: 1.5rem; }
         
         .checkbox-cell { width: 40px; }
-        .checkbox-cell input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #4a90e2; }
+        .checkbox-cell input[type="checkbox"] { 
+            width: 18px; 
+            height: 18px; 
+            cursor: pointer; 
+            accent-color: #4a90e2; 
+        }
         
-        .date-cell { color: #333; font-weight: 500; white-space: nowrap; }
-        .time-cell { color: #999; font-size: 0.85rem; }
+        .date-cell { 
+            color: #333; 
+            font-weight: 500; 
+            white-space: nowrap; 
+        }
+        .time-cell { 
+            color: #999; 
+            font-size: 0.85rem; 
+        }
         
-        .user-cell { display: flex; align-items: center; gap: 0.75rem; }
-        .user-email { color: #333; font-weight: 500; }
+        .user-cell { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.75rem; 
+        }
+        .user-email { 
+            color: #333; 
+            font-weight: 500; 
+        }
         
-        .to-cell { display: flex; align-items: center; gap: 0.5rem; }
-        .avatar-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 0.85rem; }
+        .to-cell { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+        }
+        .avatar-circle { 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #fff; 
+            font-weight: 600; 
+            font-size: 0.85rem; 
+        }
         
-        .title-cell { color: #333; max-width: 400px; }
-        .title-main { font-weight: 600; margin-bottom: 0.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .title-sub { color: #999; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .title-cell { 
+            color: #333; 
+            max-width: 350px; 
+        }
+        .title-main { 
+            font-weight: 600; 
+            margin-bottom: 0.25rem; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            white-space: nowrap; 
+        }
+        .title-sub { 
+            color: #999; 
+            font-size: 0.85rem; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            white-space: nowrap; 
+        }
         
-        .actions-cell { display: flex; align-items: center; gap: 0.75rem; }
-        .action-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: transparent; }
-        .action-icon:hover { background: #f0f3f7; transform: scale(1.1); }
-        .action-icon i { font-size: 1rem; color: #999; }
+        .actions-cell { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.75rem; 
+        }
+        .action-icon { 
+            width: 32px; 
+            height: 32px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            background: transparent; 
+            border: none;
+        }
+        .action-icon:hover { 
+            background: #f0f3f7; 
+            transform: scale(1.1); 
+        }
+        .action-icon i { 
+            font-size: 1rem; 
+            color: #999; 
+        }
         .action-icon.active i { color: #4a90e2; }
-        .status-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .action-menu-btn { background: none; border: none; cursor: pointer; color: #999; font-size: 1.2rem; padding: 0.25rem; }
+        .status-dot { 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%; 
+        }
+        .action-menu-btn { 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            color: #999; 
+            font-size: 1.2rem; 
+            padding: 0.25rem; 
+        }
         .action-menu-btn:hover { color: #333; }
 
-        .empty-state { text-align: center; padding: 4rem 2rem; color: #999; }
-        .empty-state i { font-size: 4rem; margin-bottom: 1rem; color: #ddd; }
+        .empty-state { 
+            text-align: center; 
+            padding: 4rem 2rem; 
+            color: #999; 
+        }
+        .empty-state i { 
+            font-size: 4rem; 
+            margin-bottom: 1rem; 
+            color: #ddd; 
+        }
         .empty-state p { font-size: 1.1rem; }
         
         @media print {
-            .sidebar, .navbar, .filter-bar, .search-bar, .actions-cell { display: none !important; }
+            .sidebar, .navbar, .filter-bar, .search-bar, .actions-cell { 
+                display: none !important; 
+            }
             .main { margin-left: 0; }
             .content { padding: 1rem; }
         }
         
-        @media (max-width: 980px) {
-            .sidebar { left: -240px; }
-            .sidebar.mobile-open { left: 0; }
-            .main { margin-left: 0; }
-            .mobile-menu-btn { display: block !important; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 1200px) {
+            .stats-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+            }
+            .circle-wrapper,
+            .circle-bg,
+            .circle-progress {
+                width: 90px;
+                height: 90px;
+            }
+            .circle-number {
+                font-size: 1.4rem;
+            }
         }
-    </style>
+        
+        @media (max-width: 980px) {
+            .sidebar { 
+                left: -240px; 
+            }
+            .sidebar.mobile-open { 
+                left: 0; 
+                box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            }
+            .main { 
+                margin-left: 0; 
+                width: 100%;
+            }
+            .mobile-menu-btn { 
+                display: block !important; 
+            }
+            .navbar {
+                padding: 1rem;
+            }
+            .navbar h1 {
+                font-size: 1.2rem;
+            }
+            .content {
+                padding: 1rem;
+            }
+            .top-section {
+                padding: 1rem;
+            }
+            .filter-bar {
+                gap: 0.75rem;
+            }
+            .action-btn {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+            .stats-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 1rem;
+            }
+            .logs-section {
+                padding: 1rem;
+            }
+            .search-bar {
+                gap: 0.75rem;
+            }
+            .pagination-text {
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .username {
+                display: none;
+            }
+            .profile {
+                gap: 0.5rem;
+            }
+            .notification-menu {
+                width: 90vw;
+                right: -20px;
+            }
+            .stats-grid { 
+                grid-template-columns: 1fr; 
+            }
+            .circle-wrapper,
+            .circle-bg,
+            .circle-progress {
+                width: 100px;
+                height: 100px;
+            }
+            .circle-number {
+                font-size: 1.6rem;
+            }
+            .circle-label {
+                font-size: 0.9rem;
+            }
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-label {
+                margin-bottom: 0.5rem;
+            }
+            .dropdown-filter,
+            .date-filter {
+                width: 100%;
+            }
+            .search-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-input-wrapper {
+                width: 100%;
+            }
+            .pagination-text {
+                order: -1;
+                text-align: center;            padding-bottom: 0.5rem;
+        }
+        .logs-table {
+            min-width: 800px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .navbar {
+            padding: 0.75rem;
+        }
+        .navbar h1 {
+            font-size: 1.1rem;
+        }
+        .content {
+            padding: 0.75rem;
+        }
+        .top-section,
+        .logs-section {
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+        .circle-wrapper,
+        .circle-bg,
+        .circle-progress {
+            width: 80px;
+            height: 80px;
+        }
+        .circle-number {
+            font-size: 1.3rem;
+        }
+        .circle-label {
+            font-size: 0.8rem;
+        }
+    }
+</style>
 </head>
-
 <body>
     <aside class="sidebar">
         <div>
@@ -211,7 +956,6 @@
                 <img src="logo.png" alt="Logo" class="logo" />
                 <h2>TayabaStrack</h2>
             </div>
-            <!-- ✅ UPDATED SIDEBAR MENU WITH IMPROVED SUBMENU -->
             <ul class="sidebar-menu">
                 <li><a href="dashboard.html"><i class="fa fa-home"></i>&nbsp; Dashboard</a></li>
                 <li><a href="usermanagement.html"><i class="fa fa-users"></i>&nbsp; User Management</a></li>
@@ -230,225 +974,234 @@
                 <li class="active"><a href="auditlogs.html"><i class="fa fa-clipboard-list"></i>&nbsp; Audit Logs</a></li>
             </ul>
         </div>
+    <div class="sidebar-footer">
+        <button class="logout-btn" id="logoutBtn">
+            <i class="fa fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+</aside>
 
-        <div class="sidebar-footer">
-            <button class="logout-btn" id="logoutBtn">
-                <i class="fa fa-sign-out-alt"></i> Logout
+<main class="main">
+    <nav class="navbar">
+        <div class="navbar-left">
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fa fa-bars"></i>
             </button>
+            <h1>Audit Logs</h1>
         </div>
-    </aside>
+        <div class="profile">
+            <div style="position: relative;">
+                <i class="fa fa-bell" id="notificationBell"></i>
+                <span class="badge" id="notificationBadge">0</span>
 
-    <main class="main">
-        <nav class="navbar">
-            <div class="navbar-left">
-                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                    <i class="fa fa-bars"></i>
+                <div class="notification-menu" id="notificationMenu">
+                    <div class="notification-header">
+                        <h3>Notifications</h3>
+                        <div class="notification-actions">
+                            <button class="action-icon-btn" id="markAllReadBtn" title="Mark all as read">
+                                <i class="fa fa-check-double"></i>
+                            </button>
+                            <button class="action-icon-btn" id="clearNotificationsBtn" title="Clear all">
+                                <i class="fa fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="notification-filters">
+                        <button class="filter-btn-notif active" data-filter="all">All</button>
+                        <button class="filter-btn-notif" data-filter="report">Reports</button>
+                        <button class="filter-btn-notif" data-filter="user">Users</button>
+                        <button class="filter-btn-notif" data-filter="24h">Last 24h</button>
+                    </div>
+
+                    <div class="notification-list" id="notificationList">
+                        <div class="notification-empty">No new notifications</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-dropdown" id="profileToggle">
+                <img src="image.png" alt="Profile" class="avatar" id="navbarAvatar" />
+                <span class="username" id="navbarName">---</span>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="profile.html"><i class="fa fa-user"></i> Profile</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="content">
+        <div class="top-section">
+            <div class="filter-bar">
+                <span class="filter-label">Filters</span>
+                <div class="date-filter">
+                    <i class="fa fa-search"></i>
+                    <input type="text" id="dateRange" placeholder="Select date range" readonly style="cursor: pointer; width: 150px;" />
+                </div>
+                <div class="dropdown-filter">
+                    <select id="actionFilter">
+                        <option value="">All Actions</option>
+                        <option value="login">Login</option>
+                        <option value="logout">Logout</option>
+                        <option value="add">Add</option>
+                        <option value="edit">Edit</option>
+                        <option value="update">Update</option>
+                        <option value="delete">Delete</option>
+                        <option value="status">Status Change</option>
+                        <option value="upload">Upload</option>
+                        <option value="approve">Approve</option>
+                        <option value="decline">Decline</option>
+                    </select>
+                </div>
+                <div class="dropdown-filter">
+                    <select id="moduleFilter">
+                        <option value="">All Modules</option>
+                        <option value="Authentication">Authentication</option>
+                        <option value="Reports">Reports</option>
+                        <option value="Users">Users</option>
+                        <option value="System">System</option>
+                    </select>
+                </div>
+                <button class="action-btn" onclick="exportToCSV()">
+                    <i class="fa fa-download"></i> Export
                 </button>
-                <h1>Audit Logs</h1>
             </div>
-            <div class="profile">
-                <div style="position: relative;">
-                    <i class="fa fa-bell" id="notificationBell"></i>
-                    <span class="badge" id="notificationBadge">0</span>
 
-                    <div class="notification-menu" id="notificationMenu">
-                        <div class="notification-header">
-                            <h3>Notifications</h3>
-                            <div class="notification-actions">
-                                <button class="action-icon-btn" id="markAllReadBtn" title="Mark all as read">
-                                    <i class="fa fa-check-double"></i>
-                                </button>
-                                <button class="action-icon-btn" id="clearNotificationsBtn" title="Clear all">
-                                    <i class="fa fa-trash-alt"></i>
-                                </button>
-                            </div>
+            <div class="stats-grid">
+                <div class="stat-circle">
+                    <div class="circle-wrapper">
+                        <div class="circle-bg">
+                            <span class="circle-number" id="totalUsers">0</span>
                         </div>
-
-                        <div class="notification-filters">
-                            <button class="filter-btn-notif active" data-filter="all">All</button>
-                            <button class="filter-btn-notif" data-filter="report">Reports</button>
-                            <button class="filter-btn-notif" data-filter="user">Users</button>
-                            <button class="filter-btn-notif" data-filter="24h">Last 24h</button>
-                        </div>
-
-                        <div class="notification-list" id="notificationList">
-                            <div class="notification-empty">No new notifications</div>
-                        </div>
+                        <svg class="circle-progress" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="8"/>
+                            <circle id="userCircle" cx="50" cy="50" r="45" fill="none" stroke="#4a90e2" stroke-width="8" 
+                                stroke-dasharray="282.743" stroke-dashoffset="70.686" 
+                                stroke-linecap="round" transform="rotate(-90 50 50)" 
+                                style="transition: stroke-dashoffset 0.5s ease;"/>
+                        </svg>
+                    </div>
+                    <div class="circle-label">
+                        <span class="circle-dot" style="background: #4a90e2;"></span>
+                        Total Active Users
                     </div>
                 </div>
 
-                <div class="profile-dropdown" id="profileToggle">
-                    <img src="image.png" alt="Profile" class="avatar" id="navbarAvatar" />
-                    <span class="username" id="navbarName">---</span>
-                    <div class="dropdown-menu" id="dropdownMenu">
-                        <a href="profile.html"><i class="fa fa-user"></i> Profile</a>
+                <div class="stat-circle">
+                    <div class="circle-wrapper">
+                        <div class="circle-bg">
+                            <span class="circle-number" id="totalAdded">0</span>
+                        </div>
+                        <svg class="circle-progress" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="8"/>
+                            <circle id="addCircle" cx="50" cy="50" r="45" fill="none" stroke="#5cb85c" stroke-width="8" 
+                                stroke-dasharray="282.743" stroke-dashoffset="70.686" 
+                                stroke-linecap="round" transform="rotate(-90 50 50)"
+                                style="transition: stroke-dashoffset 0.5s ease;"/>
+                        </svg>
+                    </div>
+                    <div class="circle-label">
+                        <span class="circle-dot" style="background: #5cb85c;"></span>
+                        Records Added
                     </div>
                 </div>
-            </div>
-        </nav>
 
-        <div class="content">
-            <div class="top-section">
-                <div class="filter-bar">
-                    <span class="filter-label">Filters</span>
-                    <div class="date-filter">
-                        <i class="fa fa-search"></i>
-                        <input type="text" id="dateRange" placeholder="Select date range" readonly style="cursor: pointer; width: 150px;" />
+                <div class="stat-circle">
+                    <div class="circle-wrapper">
+                        <div class="circle-bg">
+                            <span class="circle-number" id="totalEdited">0</span>
+                        </div>
+                        <svg class="circle-progress" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="8"/>
+                            <circle id="editCircle" cx="50" cy="50" r="45" fill="none" stroke="#f0ad4e" stroke-width="8" 
+                                stroke-dasharray="282.743" stroke-dashoffset="141.372" 
+                                stroke-linecap="round" transform="rotate(-90 50 50)"
+                                style="transition: stroke-dashoffset 0.5s ease;"/>
+                        </svg>
                     </div>
-                    <div class="dropdown-filter">
-                        <select id="actionFilter">
-                            <option value="">All Actions</option>
-                            <option value="login">Login</option>
-                            <option value="logout">Logout</option>
-                            <option value="add">Add</option>
-                            <option value="edit">Edit</option>
-                            <option value="update">Update</option>
-                            <option value="delete">Delete</option>
-                            <option value="status">Status Change</option>
-                            <option value="upload">Upload</option>
-                            <option value="approve">Approve</option>
-                            <option value="decline">Decline</option>
-                        </select>
+                    <div class="circle-label">
+                        <span class="circle-dot" style="background: #f0ad4e;"></span>
+                        Records Edited
                     </div>
-                    <div class="dropdown-filter">
-                        <select id="moduleFilter">
-                            <option value="">All Modules</option>
-                            <option value="Authentication">Authentication</option>
-                            <option value="Reports">Reports</option>
-                            <option value="Users">Users</option>
-                            <option value="System">System</option>
-                        </select>
-                    </div>
-                    <button class="action-btn" onclick="exportToCSV()">
-                        <i class="fa fa-download"></i> Export
-                    </button>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-circle">
-                        <div class="circle-wrapper">
-                            <div class="circle-bg">
-                                <span class="circle-number" id="totalUsers">0</span>
-                            </div>
-                            <svg class="circle-progress" viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r="54" fill="none" stroke="#e0e0e0" stroke-width="8"/>
-                                <circle id="userCircle" cx="60" cy="60" r="54" fill="none" stroke="#4a90e2" stroke-width="8" 
-                                    stroke-dasharray="339.292" stroke-dashoffset="84.823" 
-                                    stroke-linecap="round" transform="rotate(-90 60 60)" 
-                                    style="transition: stroke-dashoffset 0.5s ease;"/>
-                            </svg>
+                <div class="stat-circle">
+                    <div class="circle-wrapper">
+                        <div class="circle-bg">
+                            <span class="circle-number" id="totalDeleted">0</span>
                         </div>
-                        <div class="circle-label">
-                            <span class="circle-dot" style="background: #4a90e2;"></span>
-                            Total Active Users
-                        </div>
+                        <svg class="circle-progress" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="8"/>
+                            <circle id="deleteCircle" cx="50" cy="50" r="45" fill="none" stroke="#d9534f" stroke-width="8" 
+                                stroke-dasharray="282.743" stroke-dashoffset="212.057" 
+                                stroke-linecap="round" transform="rotate(-90 50 50)"
+                                style="transition: stroke-dashoffset 0.5s ease;"/>
+                        </svg>
                     </div>
-
-                    <div class="stat-circle">
-                        <div class="circle-wrapper">
-                            <div class="circle-bg">
-                                <span class="circle-number" id="totalAdded">0</span>
-                            </div>
-                            <svg class="circle-progress" viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r="54" fill="none" stroke="#e0e0e0" stroke-width="8"/>
-                                <circle id="addCircle" cx="60" cy="60" r="54" fill="none" stroke="#5cb85c" stroke-width="8" 
-                                    stroke-dasharray="339.292" stroke-dashoffset="84.823" 
-                                    stroke-linecap="round" transform="rotate(-90 60 60)"
-                                    style="transition: stroke-dashoffset 0.5s ease;"/>
-                            </svg>
-                        </div>
-                        <div class="circle-label">
-                            <span class="circle-dot" style="background: #5cb85c;"></span>
-                            Records Added
-                        </div>
-                    </div>
-
-                    <div class="stat-circle">
-                        <div class="circle-wrapper">
-                            <div class="circle-bg">
-                                <span class="circle-number" id="totalEdited">0</span>
-                            </div>
-                            <svg class="circle-progress" viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r="54" fill="none" stroke="#e0e0e0" stroke-width="8"/>
-                                <circle id="editCircle" cx="60" cy="60" r="54" fill="none" stroke="#f0ad4e" stroke-width="8" 
-                                    stroke-dasharray="339.292" stroke-dashoffset="169.646" 
-                                    stroke-linecap="round" transform="rotate(-90 60 60)"
-                                    style="transition: stroke-dashoffset 0.5s ease;"/>
-                            </svg>
-                        </div>
-                        <div class="circle-label">
-                            <span class="circle-dot" style="background: #f0ad4e;"></span>
-                            Records Edited
-                        </div>
-                    </div>
-
-                    <div class="stat-circle">
-                        <div class="circle-wrapper">
-                            <div class="circle-bg">
-                                <span class="circle-number" id="totalDeleted">0</span>
-                            </div>
-                            <svg class="circle-progress" viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r="54" fill="none" stroke="#e0e0e0" stroke-width="8"/>
-                                <circle id="deleteCircle" cx="60" cy="60" r="54" fill="none" stroke="#d9534f" stroke-width="8" 
-                                    stroke-dasharray="339.292" stroke-dashoffset="254.469" 
-                                    stroke-linecap="round" transform="rotate(-90 60 60)"
-                                    style="transition: stroke-dashoffset 0.5s ease;"/>
-                            </svg>
-                        </div>
-                        <div class="circle-label">
-                            <span class="circle-dot" style="background: #d9534f;"></span>
-                            Records Deleted
-                        </div>
+                    <div class="circle-label">
+                        <span class="circle-dot" style="background: #d9534f;"></span>
+                        Records Deleted
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="logs-section">
-                <div class="search-bar">
-                    <div class="search-input-wrapper">
-                        <i class="fa fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="Search by name, email or more" />
-                    </div>
-                    <button class="action-icon" onclick="loadAuditLogs()">
-                        <i class="fa fa-sync-alt"></i>
-                    </button>
-                    <span class="pagination-text" id="paginationText">0 out of 0</span>
-<button class="action-icon" onclick="previousPage()">
-<i class="fa fa-chevron-left"></i>
-</button>
-<button class="action-icon" onclick="nextPage()">
-<i class="fa fa-chevron-right"></i>
-</button>
-</div>
-            <div class="logs-table-wrapper">
-                <table class="logs-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="selectAll" /></th>
-                            <th>Date</th>
-                            <th>User</th>
-                            <th>Action</th>
-                            <th>Module</th>
-                            <th>Description</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logsTableBody">
-                        <tr>
-                            <td colspan="7" class="empty-state">
-                                <i class="fa fa-clipboard-list"></i>
-                                <p>Loading audit logs...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="logs-section">
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <i class="fa fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search by name, email or more" />
+                </div>
+                <button class="action-icon" onclick="loadAuditLogs()">
+                    <i class="fa fa-sync-alt"></i>
+                </button>
+                <span class="pagination-text" id="paginationText">0 out of 0</span>
+                <button class="action-icon" onclick="previousPage()">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <button class="action-icon" onclick="nextPage()">
+                    <i class="fa fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="table-scroll-container">
+                <button class="table-nav-btn left" id="scrollLeftBtn" onclick="scrollTableLeft()">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <button class="table-nav-btn right" id="scrollRightBtn" onclick="scrollTableRight()">
+                    <i class="fa fa-chevron-right"></i>
+                </button>
+                
+                <div class="logs-table-wrapper" id="tableWrapper">
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll" /></th>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Module</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <i class="fa fa-clipboard-list"></i>
+                                    <p>Loading audit logs...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </main>
 
 <script>
-    // ✅ IMPROVED SUBMENU TOGGLE FUNCTION
+    // ===== SIDEBAR TOGGLE =====
     function toggleSubmenu(event) {
         event.preventDefault();
         const submenu = event.currentTarget.nextElementSibling;
@@ -476,6 +1229,55 @@
         }
     });
 
+    // ===== HORIZONTAL TABLE SCROLL =====
+    function scrollTableLeft() {
+        const wrapper = document.getElementById('tableWrapper');
+        wrapper.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+
+    function scrollTableRight() {
+        const wrapper = document.getElementById('tableWrapper');
+        wrapper.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+
+    function updateScrollButtons() {
+        const wrapper = document.getElementById('tableWrapper');
+        const leftBtn = document.getElementById('scrollLeftBtn');
+        const rightBtn = document.getElementById('scrollRightBtn');
+        
+        if (!wrapper || !leftBtn || !rightBtn) return;
+        
+        const hasScroll = wrapper.scrollWidth > wrapper.clientWidth;
+        const atStart = wrapper.scrollLeft <= 0;
+        const atEnd = wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth - 1;
+        
+        if (hasScroll) {
+            if (!atStart) {
+                leftBtn.classList.add('show');
+            } else {
+                leftBtn.classList.remove('show');
+            }
+            
+            if (!atEnd) {
+                rightBtn.classList.add('show');
+            } else {
+                rightBtn.classList.remove('show');
+            }
+        } else {
+            leftBtn.classList.remove('show');
+            rightBtn.classList.remove('show');
+        }
+    }
+
+    // Update scroll buttons on scroll
+    document.getElementById('tableWrapper').addEventListener('scroll', updateScrollButtons);
+    
+    // Update scroll buttons on window resize
+    window.addEventListener('resize', updateScrollButtons);
+    
+    // Initial check
+    setTimeout(updateScrollButtons, 500);
+
     function updateAllProfilePhotos(photoURL) {
         const photoElements = ["navbarAvatar"];
         photoElements.forEach(id => {
@@ -497,7 +1299,8 @@
 
     function updateCircleProgress(circleId, value, maxValue) {
         const circle = document.getElementById(circleId);
-        const circumference = 339.292;
+        if (!circle) return;
+        const circumference = 282.743;
         const percent = Math.min(value / maxValue, 1);
         const offset = circumference - (percent * circumference);
         circle.style.strokeDashoffset = offset;
@@ -676,6 +1479,7 @@
         }).join('');
 
         updatePagination();
+        setTimeout(updateScrollButtons, 100);
     }
 
     function escapeHtml(text) {
@@ -743,7 +1547,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { 
-        getFirestore, doc, getDoc, collection, addDoc, getDocs, onSnapshot, query, orderBy, where, serverTimestamp, limit
+        getFirestore, doc, getDoc, collection, addDoc, getDocs, onSnapshot, query, orderBy, where, serverTimestamp, limit, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -843,13 +1647,12 @@
 
     document.querySelectorAll(".filter-btn-notif").forEach((btn) => {
         btn.addEventListener("click", (e) => {
-            document.querySelectorAll(".filter-btn-notif").forEach((b) => b.classList.remove("active"));
-            e.target.classList.add("active");
-            currentFilter = e.target.dataset.filter;
-            updateNotificationUI();
-        });
-    });
-
+document.querySelectorAll(".filter-btn-notif").forEach((b) => b.classList.remove("active"));
+e.target.classList.add("active");
+currentFilter = e.target.dataset.filter;
+updateNotificationUI();
+});
+});
     function addNotification(type, message, detail, uniqueId) {
         if (trackedIds.has(uniqueId)) return;
         
@@ -991,6 +1794,117 @@
         }
     };
 
+    window.declineReport = async function(reportId, declineReason) {
+        if (!reportId) {
+            alert("No report ID provided");
+            return;
+        }
+
+        if (!declineReason || declineReason.trim() === "") {
+            alert("Please provide a reason for declining");
+            return;
+        }
+
+        try {
+            const reportRef = doc(db, "reports", reportId);
+            const reportSnap = await getDoc(reportRef);
+
+            if (!reportSnap.exists()) {
+                alert("Report not found");
+                return;
+            }
+
+            const reportData = reportSnap.data();
+            const previousStatus = reportData.status || "pending";
+
+            await updateDoc(reportRef, {
+                status: "declined",
+                declineReason: declineReason.trim(),
+                declinedAt: serverTimestamp(),
+                declinedBy: auth.currentUser.uid
+            });
+
+            await window.logAuditEvent(
+                "Report Declined",
+                "decline",
+                "Reports",
+                `Declined ${reportData.reportType || reportData.type || 'report'} in ${reportData.barangay || reportData.location || 'Unknown location'}. Reason: ${declineReason.trim()}`,
+                {
+                    reportId: reportId,
+                    reportType: reportData.reportType || reportData.type || "Unknown",
+                    barangay: reportData.barangay || reportData.location || "Unknown",
+                    declineReason: declineReason.trim(),
+                    beforeValue: previousStatus,
+                    afterValue: "declined"
+                }
+            );
+
+            alert("Report declined successfully");
+            
+            if (typeof loadReports === 'function') {
+                await loadReports();
+            } else {
+                location.reload();
+            }
+
+        } catch (error) {
+            console.error("Error declining report:", error);
+            alert("Failed to decline report: " + error.message);
+        }
+    };
+
+    window.approveReport = async function(reportId) {
+        if (!reportId) {
+            alert("No report ID provided");
+            return;
+        }
+
+        try {
+            const reportRef = doc(db, "reports", reportId);
+            const reportSnap = await getDoc(reportRef);
+
+            if (!reportSnap.exists()) {
+                alert("Report not found");
+                return;
+            }
+
+            const reportData = reportSnap.data();
+            const previousStatus = reportData.status || "pending";
+
+            await updateDoc(reportRef, {
+                status: "approved",
+                approvedAt: serverTimestamp(),
+                approvedBy: auth.currentUser.uid
+            });
+
+            await window.logAuditEvent(
+                "Report Approved",
+                "approve",
+                "Reports",
+                `Approved ${reportData.reportType || reportData.type || 'report'} in ${reportData.barangay || reportData.location || 'Unknown location'}`,
+                {
+                    reportId: reportId,
+                    reportType: reportData.reportType || reportData.type || "Unknown",
+                    barangay: reportData.barangay || reportData.location || "Unknown",
+                    beforeValue: previousStatus,
+                    afterValue: "approved"
+                }
+            );
+
+            alert("Report approved successfully");
+            
+            if (typeof loadReports === 'function') {
+                await loadReports();
+            } else {
+                location.reload();
+            }
+
+        } catch (error) {
+            console.error("Error approving report:", error);
+            alert("Failed to approve report: " + error.message);
+        }
+    };
+
     async function countActiveUsers() {
         try {
             const usersSnapshot = await getDocs(query(collection(db, "users"), where("status", "==", "active")));
@@ -1062,7 +1976,8 @@
                             description: data.description || "",
                             beforeValue: data.beforeValue || "",
                             afterValue: data.afterValue || "",
-                            barangay: data.barangay || ""
+                            barangay: data.barangay || "",
+                            declineReason: data.declineReason || ""
                         };
                         
                         allLogs.push(logEntry);
@@ -1164,7 +2079,6 @@
             await loadAuditLogs();
             await setupRealtimeNotifications();
             console.log("All systems initialized");
-
         } catch (error) {
             console.error("Error in auth state:", error);
             alert("Error loading user data. Please refresh the page.");
