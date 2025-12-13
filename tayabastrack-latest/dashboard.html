@@ -359,14 +359,62 @@
   const db = getFirestore(app);
   const storage = getStorage(app);
 
-  // 🔒 SET SESSION-ONLY PERSISTENCE - Logs out when tab closes
-  setPersistence(auth, browserSessionPersistence)
-    .then(() => {
-      console.log("✅ Super Admin Dashboard: Auth persistence set to SESSION (logout on tab close)");
-    })
-    .catch((error) => {
-      console.error("❌ Error setting persistence:", error);
-    });
+
+setPersistence(auth, browserSessionPersistence)
+  .then(() => {
+    console.log("Auth persistence set to SESSION");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
+
+// ✅ IMPROVED: Only logout on tab/browser close, not on internal navigation
+let isInternalNavigation = false;
+
+// Track internal navigation clicks
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a');
+  if (link && link.href && !link.href.includes('http') || 
+      (link && link.href && link.href.includes(window.location.origin))) {
+    isInternalNavigation = true;
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isInternalNavigation = false;
+    }, 100);
+  }
+});
+
+// Only logout when actually closing the tab/browser
+window.addEventListener('beforeunload', async (e) => {
+  // Don't logout if it's internal navigation
+  if (isInternalNavigation) {
+    return;
+  }
+  
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      await signOut(auth);
+    }
+  } catch (error) {
+    console.error("❌ Error during auto logout:", error);
+  }
+});
+
+// Alternative: Use pagehide event which is more reliable for cleanup
+window.addEventListener('pagehide', async (e) => {
+  if (!isInternalNavigation && e.persisted === false) {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        // Use sendBeacon for more reliable logout on page unload
+        navigator.sendBeacon && await signOut(auth);
+      }
+    } catch (error) {
+      console.error("❌ Error during auto logout:", error);
+    }
+  }
+});
 
   const navbarName = document.getElementById("navbarName");
   const navbarAvatar = document.getElementById("navbarAvatar");
@@ -694,12 +742,23 @@
     await setupRealtimeNotifications();
   });
 
-  logoutBtn.addEventListener("click", async () => {
-    if (confirm("Are you sure you want to logout?")) {
-      await signOut(auth);
-      window.location.replace("index.html");
+    // Add the performLogout function first
+    async function performLogout() {
+      try {
+        await signOut(auth);
+        sessionStorage.clear();
+        window.location.href = "login.html";
+      } catch (error) {
+        console.error("❌ Error during logout:", error);
+      }
     }
-  });
+
+    // Then update your button handler to use it
+    logoutBtn.addEventListener("click", async () => {
+      if (confirm("Are you sure you want to logout?")) {
+        await performLogout(); // ← Just call this instead of signOut directly
+      }
+    });
 
   async function loadDashboardData() {
     const snapshot = await getDocs(collection(db, "reports"));
