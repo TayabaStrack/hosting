@@ -27,19 +27,46 @@
       transition: background 0.3s ease;
     }
 
-    .logo-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: -0.5rem;
-    }
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: -0.5rem;
+}
 
-    .logo-container img {
-      width: 400px;
-      height: auto;
-      max-width: 90%;
-      object-fit: contain;
-    }
+.logo-circle {
+  width: 180px;                       /* Circle size */
+  height: 180px;                      /* Same as width */
+  background-color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.logo-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .logo-circle {
+    width: 140px;
+    height: 140px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-circle {
+    width: 110px;
+    height: 110px;
+    padding: 12px;
+  }
+}
 
     .left-panel h1 {
       font-size: 1.8rem;
@@ -374,8 +401,9 @@
   <!-- Left Panel -->
   <div class="left-panel">
     <div class="logo-container">
-      <img src="last.png" alt="TayabasTrack Logo"/>
-    </div>
+      <div class="logo-circle">
+      <img src="logo.png" alt="TayabasTrack Logo"/>
+    </div></div>
 
     <h1>Welcome to TayabasTrack</h1>
     <p>Access Portal</p>

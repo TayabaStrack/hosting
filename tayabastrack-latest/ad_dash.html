@@ -1067,80 +1067,90 @@
         });
     }
 
-    let barangayChart;
-    function updateBarangayChart(barangayData) {
-        const ctx = document.getElementById("barangayChart");
-        if (!ctx) return;
-        
-        if (barangayChart) barangayChart.destroy();
+   let barangayChart;
+function updateBarangayChart(barangayData) {
+    const ctx = document.getElementById("barangayChart");
+    if (!ctx) return;
+    
+    if (barangayChart) barangayChart.destroy();
 
-        const sortedBarangays = Object.entries(barangayData)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10);
+    const sortedBarangays = Object.entries(barangayData)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
 
-        const labels = sortedBarangays.map(item => item[0]);
-        const data = sortedBarangays.map(item => item[1]);
+    const labels = sortedBarangays.map(item => item[0]);
+    const data = sortedBarangays.map(item => item[1]);
 
-        barangayChart = new Chart(ctx.getContext("2d"), {
-            type: "line",
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: "Number of Reports",
-                    data: data,
-                    borderColor: "#004aad",
-                    backgroundColor: "rgba(0, 74, 173, 0.1)",
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: "#004aad",
-                    pointBorderColor: "#fff",
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
+    barangayChart = new Chart(ctx.getContext("2d"), {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                borderColor: "#004aad",
+                backgroundColor: "rgba(0, 74, 173, 0.1)",
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: "#004aad",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointHitRadius: 10  // ✅ ADDED: Larger hit detection area
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'nearest',  // ✅ ADDED: Find nearest point
+                intersect: false  // ✅ ADDED: Don't require direct intersection
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    },
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(0, 74, 173, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#004aad',
-                        borderWidth: 1
-                    }
+            plugins: {
+                legend: {
+                    display: false
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 74, 173, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#004aad',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Reports: ' + context.parsed.y;
                         },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
+                        title: function(context) {
+                            return context[0].label;
                         }
                     }
                 }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
             }
-        });
-    }
-
+        }
+    });
+}
     async function loadReportImages() {
         const gallery = document.getElementById("reportImages");
         if (!gallery) return;
