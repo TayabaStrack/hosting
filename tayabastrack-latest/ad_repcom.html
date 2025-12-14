@@ -526,7 +526,7 @@ td {
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut, setPersistence, browserSessionPersistenc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, collection, query, orderBy, limit, onSnapshot, getDoc, doc, updateDoc, setDoc, getDocs, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -543,93 +543,97 @@ td {
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
-      setPersistence(auth, browserSessionPersistence)
-  .then(() => {
-    console.log("Auth persistence set to SESSION");
-  })
-  .catch((error) => {
-    console.error("Error setting persistence:", error);
-  });
- let isInternalNavigation = false;
-let isLoggingOut = false;
-let autoLogoutInitialized = false;
 
-function setupAutoLogout(auth) {
-  if (autoLogoutInitialized) {
-    console.log("⚠️ Auto-logout already initialized");
-    return;
-  }
-  autoLogoutInitialized = true;
+  // ===== SET SESSION PERSISTENCE =====
+  setPersistence(auth, browserSessionPersistence)
+    .then(() => {
+      console.log("Auth persistence set to SESSION");
+    })
+    .catch((error) => {
+      console.error("Error setting persistence:", error);
+    });
 
-  // ✅ Track ALL link clicks (including profile links)
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('a');
-    if (link && link.href) {
-      try {
-        const linkUrl = new URL(link.href, window.location.href);
-        const currentOrigin = window.location.origin;
-        
-        // Check if it's an internal link
-        if (linkUrl.origin === currentOrigin) {
-          isInternalNavigation = true;
-          console.log("🔗 Internal navigation detected:", link.href);
+  // ===== AUTO-LOGOUT VARIABLES =====
+  let isInternalNavigation = false;
+  let isLoggingOut = false;
+  let autoLogoutInitialized = false;
+
+  // ===== AUTO-LOGOUT SETUP FUNCTION =====
+  function setupAutoLogout(auth) {
+    if (autoLogoutInitialized) {
+      console.log("⚠️ Auto-logout already initialized");
+      return;
+    }
+    autoLogoutInitialized = true;
+
+    // ✅ Track ALL link clicks (including profile links)
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (link && link.href) {
+        try {
+          const linkUrl = new URL(link.href, window.location.href);
+          const currentOrigin = window.location.origin;
           
-          // ✅ LONGER timeout - 3 seconds to ensure navigation completes
+          // Check if it's an internal link
+          if (linkUrl.origin === currentOrigin) {
+            isInternalNavigation = true;
+            console.log("🔗 Internal navigation detected:", link.href);
+            
+            // ✅ LONGER timeout - 3 seconds to ensure navigation completes
+            setTimeout(() => {
+              isInternalNavigation = false;
+            }, 3000);
+          }
+        } catch (err) {
+          // If URL parsing fails, treat as internal navigation to be safe
+          isInternalNavigation = true;
           setTimeout(() => {
             isInternalNavigation = false;
           }, 3000);
         }
-      } catch (err) {
-        // If URL parsing fails, treat as internal navigation to be safe
-        isInternalNavigation = true;
-        setTimeout(() => {
-          isInternalNavigation = false;
-        }, 3000);
       }
-    }
-  }, true); // ✅ Use capture phase to catch all clicks
+    }, true); // ✅ Use capture phase to catch all clicks
 
-  // ✅ IMPROVED: Only logout on actual page close, not navigation
-  window.addEventListener('beforeunload', (e) => {
-    // Don't logout if it's internal navigation
-    if (isInternalNavigation) {
-      console.log("✅ Internal navigation - NOT logging out");
-      return;
-    }
-    
-    // Only logout on actual tab/browser close
-    if (!isLoggingOut) {
-      console.log("🚪 Tab/browser closing - logging out");
-      isLoggingOut = true;
+    // ✅ IMPROVED: Only logout on actual page close, not navigation
+    window.addEventListener('beforeunload', (e) => {
+      // Don't logout if it's internal navigation
+      if (isInternalNavigation) {
+        console.log("✅ Internal navigation - NOT logging out");
+        return;
+      }
       
-      // Use synchronous approach for reliable logout on page close
-      try {
-        signOut(auth);
-        sessionStorage.clear();
-      } catch (error) {
-        console.error("❌ Error during auto logout:", error);
+      // Only logout on actual tab/browser close
+      if (!isLoggingOut) {
+        console.log("🚪 Tab/browser closing - logging out");
+        isLoggingOut = true;
+        
+        // Use synchronous approach for reliable logout on page close
+        try {
+          signOut(auth);
+          sessionStorage.clear();
+        } catch (error) {
+          console.error("❌ Error during auto logout:", error);
+        }
       }
-    }
-  });
+    });
 
-  // ✅ Handle browser back/forward button
-  window.addEventListener('popstate', async (e) => {
-    if (!isInternalNavigation && !isLoggingOut) {
-      console.log("⬅️ Browser back button detected - logging out");
-      isLoggingOut = true;
-      try {
-        await signOut(auth);
-        sessionStorage.clear();
-        window.location.replace("login.html");
-      } catch (error) {
-        console.error("❌ Error during back navigation logout:", error);
+    // ✅ Handle browser back/forward button
+    window.addEventListener('popstate', async (e) => {
+      if (!isInternalNavigation && !isLoggingOut) {
+        console.log("⬅️ Browser back button detected - logging out");
+        isLoggingOut = true;
+        try {
+          await signOut(auth);
+          sessionStorage.clear();
+          window.location.replace("login.html");
+        } catch (error) {
+          console.error("❌ Error during back navigation logout:", error);
+        }
       }
-    }
-  });
+    });
 
-  console.log("✅ Auto-logout functionality initialized");
-}
-
+    console.log("✅ Auto-logout functionality initialized");
+  }
 
   // ===== AUDIT LOGGING FUNCTION =====
   async function logAuditEvent(action, actionType, module, description, additionalData = {}) {
@@ -2228,77 +2232,81 @@ if (!e.target.closest('.notification-menu') && e.target !== notificationBell) {
 notificationMenu.classList.remove("show");
 }
 });
-// ===== AUTHENTICATION & DATA LOADING =====
-onAuthStateChanged(auth, async (user) => {
-if (!user) {
-window.location.href = "login.html";
-return;
-}
-try {
-  const userDocRef = doc(db, "users", user.uid);
-  const userSnap = await getDoc(userDocRef);
 
-  if (!userSnap.exists()) {
-    alert("User data not found! Redirecting...");
-    window.location.href = "login.html";
-    return;
-  }
-
-  const userData = userSnap.data();
-
-  if (userData.position !== "Admin" && userData.position !== "Super Admin") {
-    alert("Unauthorized access! Only Admins can access this page.");
-    window.location.href = "login.html";
-    return;
-  }
-
-  const navUsername = document.getElementById("navUsername");
-  const navAvatar = document.getElementById("navAvatar");
-
-  if (navUsername) {
-    navUsername.textContent = userData.name || userData.firstName || "Admin";
-  }
-  if (navAvatar) {
-    navAvatar.src = userData.photoURL || userData.profilePic || "image.png";
-  }
-
-  onSnapshot(userDocRef, (docSnap) => {
-    if (docSnap.exists()) {
-      const d = docSnap.data();
-      if (navUsername) navUsername.textContent = d.name || d.firstName || "Admin";
-      if (navAvatar) navAvatar.src = d.photoURL || d.profilePic || "image.png";
+ // ===== AUTHENTICATION & DATA LOADING =====
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
     }
-  });
 
-  await setupRealtimeNotifications(db);
+   setupAutoLogout(auth);
 
-  const q = query(collection(db, "reports"), orderBy("createdAt", "desc"));
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userDocRef);
 
-  if (reportsUnsub) reportsUnsub();
-
-  reportsUnsub = onSnapshot(q, async (snap) => {
-    allCompletedReports = [];
-
-    for (const docSnap of snap.docs) {
-      const data = docSnap.data();
-      const status = (data.status || "").toLowerCase().trim();
-
-      if (status === "repaired" || status === "posted" || status === "completed") {
-        allCompletedReports.push({ docSnap, data });
+      if (!userSnap.exists()) {
+        alert("User data not found! Redirecting...");
+        window.location.href = "login.html";
+        return;
       }
+
+      const userData = userSnap.data();
+
+      if (userData.position !== "Admin" && userData.position !== "Super Admin") {
+        alert("Unauthorized access! Only Admins can access this page.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const navUsername = document.getElementById("navUsername");
+      const navAvatar = document.getElementById("navAvatar");
+
+      if (navUsername) {
+        navUsername.textContent = userData.name || userData.firstName || "Admin";
+      }
+      if (navAvatar) {
+        navAvatar.src = userData.photoURL || userData.profilePic || "image.png";
+      }
+
+      onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const d = docSnap.data();
+          if (navUsername) navUsername.textContent = d.name || d.firstName || "Admin";
+          if (navAvatar) navAvatar.src = d.photoURL || d.profilePic || "image.png";
+        }
+      });
+
+      await setupRealtimeNotifications(db);
+
+      const q = query(collection(db, "reports"), orderBy("createdAt", "desc"));
+
+      if (reportsUnsub) reportsUnsub();
+
+      reportsUnsub = onSnapshot(q, async (snap) => {
+        allCompletedReports = [];
+
+        for (const docSnap of snap.docs) {
+          const data = docSnap.data();
+          const status = (data.status || "").toLowerCase().trim();
+
+          if (status === "repaired" || status === "posted" || status === "completed") {
+            allCompletedReports.push({ docSnap, data });
+          }
+        }
+
+        populateFilterDropdowns();
+        filteredCompletedReports = [...allCompletedReports];
+        currentCompletedPage = 1;
+        await renderCompletedTable();
+      });
+
+    } catch (err) {
+      console.error("Error loading user data:", err);
+      alert("Error loading user data: " + err.message);
     }
-
-    populateFilterDropdowns();
-    filteredCompletedReports = [...allCompletedReports];
-    currentCompletedPage = 1;
-    await renderCompletedTable();
   });
-
-} catch (err) {
-  console.error("Error loading user data:", err);
-  alert("Error loading user data: " + err.message);
-}
-});
 </script>
 </body>
 </html>

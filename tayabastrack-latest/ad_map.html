@@ -358,7 +358,7 @@
     </div>
   </main>
 
-  <script>
+<script>
     let map;
     
     function initMap() {
@@ -378,6 +378,35 @@
           url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
         }
       });
+
+      // Add legend to map
+      const legend = document.createElement('div');
+      legend.id = 'map-legend';
+      legend.style.cssText = `
+        background: white;
+        padding: 15px;
+        margin: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 14px;
+      `;
+      legend.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Report Status</div>
+        <div style="display: flex; align-items: center; margin: 6px 0;">
+          <div style="width: 20px; height: 20px; background: #1cc88a; border-radius: 50%; margin-right: 8px;"></div>
+          <span>Repaired</span>
+        </div>
+        <div style="display: flex; align-items: center; margin: 6px 0;">
+          <div style="width: 20px; height: 20px; background: #36b9cc; border-radius: 50%; margin-right: 8px;"></div>
+          <span>Ongoing</span>
+        </div>
+        <div style="display: flex; align-items: center; margin: 6px 0;">
+          <div style="width: 20px; height: 20px; background: #f6c23e; border-radius: 50%; margin-right: 8px;"></div>
+          <span>Pending</span>
+        </div>
+      `;
+      map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(legend);
 
       window.addMarkersToMap();
     }
@@ -401,9 +430,9 @@
 
       window.reportData.forEach((report) => {
         const statusLower = report.status.toLowerCase().trim();
-        let markerColor = "red";
+        let markerColor = "yellow"; // Pending
         if (statusLower === "repaired" || statusLower === "completed") markerColor = "green";
-        else if (statusLower === "ongoing") markerColor = "yellow";
+        else if (statusLower === "ongoing") markerColor = "blue";
 
         const marker = new google.maps.Marker({
           position: { lat: report.lat, lng: report.lng },
@@ -415,15 +444,15 @@
         });
 
         marker.addListener("click", async () => {
-          let statusColor = "#f6c23e";
+          let statusColor = "#f6c23e"; // Yellow for pending
           let statusText = "PENDING";
           const statusLower = report.status.toLowerCase();
           
           if (statusLower === "repaired" || statusLower === "completed") {
-            statusColor = "#1cc88a";
+            statusColor = "#1cc88a"; // Green
             statusText = statusLower.toUpperCase();
           } else if (statusLower === "ongoing") {
-            statusColor = "#36b9cc";
+            statusColor = "#36b9cc"; // Blue
             statusText = "ONGOING";
           }
           
@@ -515,13 +544,11 @@
   </script>
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAJkfi59FibsnD-dxAdyYUohj36N_bOtfE&callback=initMap"></script>
 
-  <!-- Notification System -->
-
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, collection, getDocs, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB06vfES5thZQi3Yd11vkooHVH-d5d4Y3o",
@@ -536,95 +563,86 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    
     setPersistence(auth, browserSessionPersistence)
-  .then(() => {
-    console.log("Auth persistence set to SESSION");
-  })
-  .catch((error) => {
-    console.error("Error setting persistence:", error);
-  });
+      .then(() => {
+        console.log("Auth persistence set to SESSION");
+      })
+      .catch((error) => {
+        console.error("Error setting persistence:", error);
+      });
+
     let isInternalNavigation = false;
-let isLoggingOut = false;
-let autoLogoutInitialized = false;
+    let isLoggingOut = false;
+    let autoLogoutInitialized = false;
 
-function setupAutoLogout(auth) {
-  if (autoLogoutInitialized) {
-    console.log("⚠️ Auto-logout already initialized");
-    return;
-  }
-  autoLogoutInitialized = true;
+    function setupAutoLogout(auth) {
+      if (autoLogoutInitialized) {
+        console.log("⚠️ Auto-logout already initialized");
+        return;
+      }
+      autoLogoutInitialized = true;
 
-  // ✅ Track ALL link clicks (including profile links)
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('a');
-    if (link && link.href) {
-      try {
-        const linkUrl = new URL(link.href, window.location.href);
-        const currentOrigin = window.location.origin;
-        
-        // Check if it's an internal link
-        if (linkUrl.origin === currentOrigin) {
-          isInternalNavigation = true;
-          console.log("🔗 Internal navigation detected:", link.href);
-          
-          // ✅ LONGER timeout - 3 seconds to ensure navigation completes
-          setTimeout(() => {
-            isInternalNavigation = false;
-          }, 3000);
+      document.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (link && link.href) {
+          try {
+            const linkUrl = new URL(link.href, window.location.href);
+            const currentOrigin = window.location.origin;
+            
+            if (linkUrl.origin === currentOrigin) {
+              isInternalNavigation = true;
+              console.log("🔗 Internal navigation detected:", link.href);
+              
+              setTimeout(() => {
+                isInternalNavigation = false;
+              }, 3000);
+            }
+          } catch (err) {
+            isInternalNavigation = true;
+            setTimeout(() => {
+              isInternalNavigation = false;
+            }, 3000);
+          }
         }
-      } catch (err) {
-        // If URL parsing fails, treat as internal navigation to be safe
-        isInternalNavigation = true;
-        setTimeout(() => {
-          isInternalNavigation = false;
-        }, 3000);
-      }
-    }
-  }, true); // ✅ Use capture phase to catch all clicks
+      }, true);
 
-  // ✅ IMPROVED: Only logout on actual page close, not navigation
-  window.addEventListener('beforeunload', (e) => {
-    // Don't logout if it's internal navigation
-    if (isInternalNavigation) {
-      console.log("✅ Internal navigation - NOT logging out");
-      return;
-    }
-    
-    // Only logout on actual tab/browser close
-    if (!isLoggingOut) {
-      console.log("🚪 Tab/browser closing - logging out");
-      isLoggingOut = true;
-      
-      // Use synchronous approach for reliable logout on page close
-      try {
-        signOut(auth);
-        sessionStorage.clear();
-      } catch (error) {
-        console.error("❌ Error during auto logout:", error);
-      }
-    }
-  });
+      window.addEventListener('beforeunload', (e) => {
+        if (isInternalNavigation) {
+          console.log("✅ Internal navigation - NOT logging out");
+          return;
+        }
+        
+        if (!isLoggingOut) {
+          console.log("🚪 Tab/browser closing - logging out");
+          isLoggingOut = true;
+          
+          try {
+            signOut(auth);
+            sessionStorage.clear();
+          } catch (error) {
+            console.error("❌ Error during auto logout:", error);
+          }
+        }
+      });
 
-  // ✅ Handle browser back/forward button
-  window.addEventListener('popstate', async (e) => {
-    if (!isInternalNavigation && !isLoggingOut) {
-      console.log("⬅️ Browser back button detected - logging out");
-      isLoggingOut = true;
-      try {
-        await signOut(auth);
-        sessionStorage.clear();
-        window.location.replace("login.html");
-      } catch (error) {
-        console.error("❌ Error during back navigation logout:", error);
-      }
-    }
-  });
+      window.addEventListener('popstate', async (e) => {
+        if (!isInternalNavigation && !isLoggingOut) {
+          console.log("⬅️ Browser back button detected - logging out");
+          isLoggingOut = true;
+          try {
+            await signOut(auth);
+            sessionStorage.clear();
+            window.location.replace("login.html");
+          } catch (error) {
+            console.error("❌ Error during back navigation logout:", error);
+          }
+        }
+      });
 
-  console.log("✅ Auto-logout functionality initialized");
-}
+      console.log("✅ Auto-logout functionality initialized");
+    }
+
     window.db = db;
-
     window.reportData = [];
 
     const logoutBtn = document.getElementById("logoutBtn");
@@ -646,6 +664,9 @@ function setupAutoLogout(auth) {
         window.location.href = "login.html";
         return;
       }
+      
+      setupAutoLogout(auth);
+      
       try {
         const userDocRef = doc(db, "users", user.uid);
         
@@ -714,396 +735,380 @@ function setupAutoLogout(auth) {
       }
     });
 
-// Notification System Functions
-// Complete notification system with both Reports and Users
+    // Notification System Functions
+    async function setupRealtimeNotifications(db) {
+      if (!localStorage.getItem('notifications')) {
+        localStorage.setItem('notifications', '[]');
+      }
 
-async function setupRealtimeNotifications(db) {
-  const { collection, query, orderBy, limit, onSnapshot } = await import(
-    "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
-  );
+      let allNotifications = [];
 
-  // Initialize notifications array if it doesn't exist
-  if (!localStorage.getItem('notifications')) {
-    localStorage.setItem('notifications', '[]');
-  }
+      // Listen to Reports
+      const reportsRef = collection(db, "reports");
+      const reportsQuery = query(reportsRef, orderBy("createdAt", "desc"), limit(50));
 
-  let allNotifications = [];
+      onSnapshot(reportsQuery, (snapshot) => {
+        const reportNotifications = [];
+        
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          
+          let timestamp;
+          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            timestamp = data.createdAt.toDate();
+          } else if (data.timestamp && typeof data.timestamp === 'string') {
+            timestamp = new Date(data.timestamp.replace(' ', 'T'));
+          } else if (data.createdAt) {
+            timestamp = new Date(data.createdAt);
+          } else {
+            timestamp = new Date();
+          }
+          
+          const category = data.category || 'Report';
+          const issue = data.issue || '';
+          const barangay = data.barangay || data.userBarangay || 'Unknown Location';
+          const status = data.status || 'Pending';
+          const firstName = data.firstName || 'User';
+          
+          let title = `New ${category} Report`;
+          let message = `${firstName} reported ${issue} in Brgy. ${barangay}`;
+          
+          if (status.toLowerCase() === 'repaired' || status.toLowerCase() === 'completed') {
+            title = `✓ ${category} Completed`;
+            message = `${issue} in Brgy. ${barangay} has been ${status.toLowerCase()}`;
+          } else if (status.toLowerCase() === 'ongoing') {
+            title = `⚙ ${category} In Progress`;
+            message = `${issue} in Brgy. ${barangay} is now ${status.toLowerCase()}`;
+          }
+          
+          reportNotifications.push({
+            id: 'report_' + doc.id,
+            type: 'report',
+            title: title,
+            message: message,
+            timestamp: timestamp.toISOString(),
+            read: false,
+            status: status,
+            category: category,
+            barangay: barangay,
+            data: data
+          });
+        });
 
-  // ===== LISTEN TO REPORTS =====
-  const reportsRef = collection(db, "reports");
-  const reportsQuery = query(reportsRef, orderBy("createdAt", "desc"), limit(50));
+        allNotifications = [...reportNotifications, ...allNotifications.filter(n => n.type === 'user')];
+        allNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        const existingNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+        allNotifications = allNotifications.map(notification => {
+          const existing = existingNotifications.find(n => n.id === notification.id);
+          if (existing) {
+            notification.read = existing.read;
+          }
+          return notification;
+        });
+        
+        localStorage.setItem('notifications', JSON.stringify(allNotifications));
+        updateNotificationUI();
+      }, (error) => {
+        console.error("Error listening to report notifications:", error);
+      });
 
-  onSnapshot(reportsQuery, (snapshot) => {
-    const reportNotifications = [];
-    
-    snapshot.forEach((doc) => {
-      const data = doc.data();
+      // Listen to Users
+      const usersRef = collection(db, "users");
+      const usersQuery = query(usersRef, orderBy("createdAt", "desc"), limit(50));
+
+      onSnapshot(usersQuery, (snapshot) => {
+        const userNotifications = [];
+        
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          
+          let timestamp;
+          if (data.createdAt && typeof data.createdAt === 'number') {
+            timestamp = new Date(data.createdAt);
+          } else if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            timestamp = data.createdAt.toDate();
+          } else {
+            timestamp = new Date();
+          }
+          
+          const fullName = data.fullName || `${data.firstName || ''} ${data.surname || ''}`.trim() || 'New User';
+          const position = data.position || 'User';
+          const barangay = data.barangay || 'Unknown Barangay';
+          const status = data.status || 'active';
+          
+          let title = `New User Registered`;
+          let message = `${fullName} (${position}) from Brgy. ${barangay}`;
+          
+          if (status === 'active') {
+            title = `✓ New User Active`;
+          } else if (status === 'inactive') {
+            title = `User Deactivated`;
+            message = `${fullName} account is now inactive`;
+          }
+          
+          userNotifications.push({
+            id: 'user_' + doc.id,
+            type: 'user',
+            title: title,
+            message: message,
+            timestamp: timestamp.toISOString(),
+            read: false,
+            status: status,
+            position: position,
+            barangay: barangay,
+            data: data
+          });
+        });
+
+        allNotifications = [...allNotifications.filter(n => n.type === 'report'), ...userNotifications];
+        allNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        const existingNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+        allNotifications = allNotifications.map(notification => {
+          const existing = existingNotifications.find(n => n.id === notification.id);
+          if (existing) {
+            notification.read = existing.read;
+          }
+          return notification;
+        });
+        
+        localStorage.setItem('notifications', JSON.stringify(allNotifications));
+        updateNotificationUI();
+      }, (error) => {
+        console.error("Error listening to user notifications:", error);
+      });
+    }
+
+    function updateNotificationUI() {
+      const notificationsStr = localStorage.getItem('notifications') || '[]';
+      let notifications = [];
       
-      // Handle timestamp
-      let timestamp;
-      if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-        timestamp = data.createdAt.toDate();
-      } else if (data.timestamp && typeof data.timestamp === 'string') {
-        timestamp = new Date(data.timestamp.replace(' ', 'T'));
-      } else if (data.createdAt) {
-        timestamp = new Date(data.createdAt);
-      } else {
-        timestamp = new Date();
+      try {
+        notifications = JSON.parse(notificationsStr);
+      } catch (e) {
+        console.error('Error parsing notifications:', e);
+        notifications = [];
       }
       
-      const category = data.category || 'Report';
-      const issue = data.issue || '';
-      const barangay = data.barangay || data.userBarangay || 'Unknown Location';
-      const status = data.status || 'Pending';
-      const firstName = data.firstName || 'User';
+      const activeFilterBtn = document.querySelector('.filter-btn.active');
+      const activeFilter = activeFilterBtn ? activeFilterBtn.dataset.filter : 'all';
+      let filteredNotifications = filterNotifications(notifications, activeFilter);
       
-      let title = `New ${category} Report`;
-      let message = `${firstName} reported ${issue} in Brgy. ${barangay}`;
+      const unreadCount = notifications.filter(n => n && n.read === false).length;
+      const badge = document.getElementById('notificationBadge');
       
-      if (status.toLowerCase() === 'repaired' || status.toLowerCase() === 'completed') {
-        title = `✓ ${category} Completed`;
-        message = `${issue} in Brgy. ${barangay} has been ${status.toLowerCase()}`;
-      } else if (status.toLowerCase() === 'ongoing') {
-        title = `⚙ ${category} In Progress`;
-        message = `${issue} in Brgy. ${barangay} is now ${status.toLowerCase()}`;
+      if (badge) {
+        badge.textContent = unreadCount;
+        if (unreadCount > 0) {
+          badge.classList.add('show');
+        } else {
+          badge.classList.remove('show');
+        }
       }
       
-      reportNotifications.push({
-        id: 'report_' + doc.id,
-        type: 'report',
-        title: title,
-        message: message,
-        timestamp: timestamp.toISOString(),
-        read: false,
-        status: status,
-        category: category,
-        barangay: barangay,
-        data: data
+      const notificationList = document.getElementById('notificationList');
+      
+      if (!notificationList) {
+        console.error('Notification list element not found');
+        return;
+      }
+      
+      if (filteredNotifications.length === 0) {
+        notificationList.innerHTML = '<div class="notification-empty">No notifications</div>';
+        return;
+      }
+      
+      notificationList.innerHTML = filteredNotifications.map(notification => {
+        if (!notification) return '';
+        
+        const timeAgo = getTimeAgo(notification.timestamp);
+        const unreadClass = notification.read ? '' : 'unread';
+        const title = notification.title || 'Notification';
+        const message = notification.message || 'No details';
+        const id = notification.id || '';
+        
+        let iconClass = 'report';
+        let iconName = 'fa-exclamation-triangle';
+        
+        if (notification.type === 'user') {
+          iconClass = 'user';
+          iconName = 'fa-user-plus';
+          
+          if (notification.status === 'inactive') {
+            iconName = 'fa-user-slash';
+          }
+        } else if (notification.type === 'report') {
+          const status = (notification.status || '').toLowerCase();
+          if (status === 'repaired' || status === 'completed') {
+            iconName = 'fa-check-circle';
+          } else if (status === 'ongoing') {
+            iconName = 'fa-tools';
+          } else {
+            iconName = 'fa-exclamation-triangle';
+          }
+        }
+        
+        return `
+          <div class="notification-item ${unreadClass}" data-id="${id}">
+            <div class="notification-icon ${iconClass}">
+              <i class="fa ${iconName}"></i>
+            </div>
+            <div class="notification-content">
+              <p><strong>${title}</strong></p>
+              <p>${message}</p>
+              <div class="time">${timeAgo}</div>
+            </div>
+          </div>
+        `;
+      }).filter(html => html !== '').join('');
+      
+      document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          if (id) markAsRead(id);
+        });
+      });
+    }
+
+    function filterNotifications(notifications, filter) {
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      
+      switch(filter) {
+        case 'report':
+          return notifications.filter(n => n.type === 'report');
+        case 'user':
+          return notifications.filter(n => n.type === 'user');
+        case '24h':
+          return notifications.filter(n => new Date(n.timestamp) > oneDayAgo);
+        default:
+          return notifications;
+      }
+    }
+
+    function markAsRead(notificationId) {
+      const notificationsStr = localStorage.getItem('notifications') || '[]';
+      let notifications = JSON.parse(notificationsStr);
+      
+      const notification = notifications.find(n => n.id === notificationId);
+      if (notification) {
+        notification.read = true;
+        localStorage.setItem('notifications', JSON.stringify(notifications));
+        updateNotificationUI();
+      }
+    }
+
+    function markAllAsRead() {
+      const notificationsStr = localStorage.getItem('notifications') || '[]';
+      let notifications = JSON.parse(notificationsStr);
+      
+      notifications.forEach(n => n.read = true);
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+      updateNotificationUI();
+    }
+
+    function clearAllNotifications() {
+      if (confirm('Are you sure you want to clear all notifications?')) {
+        localStorage.setItem('notifications', '[]');
+        updateNotificationUI();
+      }
+    }
+
+    function getTimeAgo(date) {
+      const seconds = Math.floor((new Date() - date) / 1000);
+      
+      const intervals = {
+        year: 31536000,
+        month: 2592000,
+        week: 604800,
+        day: 86400,
+        hour: 3600,
+        minute: 60
+      };
+      
+      for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+        const interval = Math.floor(seconds / secondsInUnit);
+        if (interval >= 1) {
+          return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
+        }
+      }
+      
+      return 'Just now';
+    }
+
+    // Notification bell and menu
+    const notificationBell = document.getElementById('notificationBell');
+    const notificationMenu = document.getElementById('notificationMenu');
+
+    if (notificationBell && notificationMenu) {
+      notificationBell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notificationMenu.classList.toggle('show');
+        
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        if (dropdownMenu) dropdownMenu.classList.remove('show');
+      });
+    }
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateNotificationUI();
       });
     });
 
-    // Merge with user notifications
-    allNotifications = [...reportNotifications, ...allNotifications.filter(n => n.type === 'user')];
-    
-    // Sort by timestamp (newest first)
-    allNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    // Preserve read status from localStorage
-    const existingNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-    allNotifications = allNotifications.map(notification => {
-      const existing = existingNotifications.find(n => n.id === notification.id);
-      if (existing) {
-        notification.read = existing.read;
-      }
-      return notification;
-    });
-    
-    localStorage.setItem('notifications', JSON.stringify(allNotifications));
-    updateNotificationUI();
-  }, (error) => {
-    console.error("Error listening to report notifications:", error);
-  });
-
-  // ===== LISTEN TO USERS =====
-  const usersRef = collection(db, "users");
-  const usersQuery = query(usersRef, orderBy("createdAt", "desc"), limit(50));
-
-  onSnapshot(usersQuery, (snapshot) => {
-    const userNotifications = [];
-    
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      
-      // Handle timestamp - createdAt is a number (Unix timestamp in milliseconds)
-      let timestamp;
-      if (data.createdAt && typeof data.createdAt === 'number') {
-        timestamp = new Date(data.createdAt);
-      } else if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-        timestamp = data.createdAt.toDate();
-      } else {
-        timestamp = new Date();
-      }
-      
-      const fullName = data.fullName || `${data.firstName || ''} ${data.surname || ''}`.trim() || 'New User';
-      const position = data.position || 'User';
-      const barangay = data.barangay || 'Unknown Barangay';
-      const status = data.status || 'active';
-      
-      let title = `New User Registered`;
-      let message = `${fullName} (${position}) from Brgy. ${barangay}`;
-      
-      // Customize based on status
-      if (status === 'active') {
-        title = `✓ New User Active`;
-      } else if (status === 'inactive') {
-        title = `User Deactivated`;
-        message = `${fullName} account is now inactive`;
-      }
-      
-      userNotifications.push({
-        id: 'user_' + doc.id,
-        type: 'user',
-        title: title,
-        message: message,
-        timestamp: timestamp.toISOString(),
-        read: false,
-        status: status,
-        position: position,
-        barangay: barangay,
-        data: data
+    // Mark all as read button
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+    if (markAllReadBtn) {
+      markAllReadBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        markAllAsRead();
       });
+    }
+
+    // Clear notifications button
+    const clearNotificationsBtn = document.getElementById('clearNotificationsBtn');
+    if (clearNotificationsBtn) {
+      clearNotificationsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearAllNotifications();
+      });
+    }
+
+    // Profile dropdown toggle
+    const profileToggle = document.getElementById('profileToggle');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+
+    if (profileToggle && dropdownMenu) {
+      profileToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+        
+        if (notificationMenu) notificationMenu.classList.remove('show');
+      });
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+      if (notificationMenu) notificationMenu.classList.remove('show');
+      if (dropdownMenu) dropdownMenu.classList.remove('show');
     });
 
-    // Merge with report notifications
-    allNotifications = [...allNotifications.filter(n => n.type === 'report'), ...userNotifications];
-    
-    // Sort by timestamp (newest first)
-    allNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    // Preserve read status from localStorage
-    const existingNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-    allNotifications = allNotifications.map(notification => {
-      const existing = existingNotifications.find(n => n.id === notification.id);
-      if (existing) {
-        notification.read = existing.read;
-      }
-      return notification;
-    });
-    
-    localStorage.setItem('notifications', JSON.stringify(allNotifications));
-    updateNotificationUI();
-  }, (error) => {
-    console.error("Error listening to user notifications:", error);
-  });
-}
-
-// Updated updateNotificationUI with proper icons for both types
-function updateNotificationUI() {
-  const notificationsStr = localStorage.getItem('notifications') || '[]';
-  let notifications = [];
-  
-  try {
-    notifications = JSON.parse(notificationsStr);
-  } catch (e) {
-    console.error('Error parsing notifications:', e);
-    notifications = [];
-  }
-  
-  // Apply active filter
-  const activeFilterBtn = document.querySelector('.filter-btn.active');
-  const activeFilter = activeFilterBtn ? activeFilterBtn.dataset.filter : 'all';
-  let filteredNotifications = filterNotifications(notifications, activeFilter);
-  
-  // Update badge count (unread only)
-  const unreadCount = notifications.filter(n => n && n.read === false).length;
-  const badge = document.getElementById('notificationBadge');
-  
-  if (badge) {
-    badge.textContent = unreadCount;
-    if (unreadCount > 0) {
-      badge.classList.add('show');
-    } else {
-      badge.classList.remove('show');
+    // Prevent closing when clicking inside menus
+    if (notificationMenu) {
+      notificationMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
     }
-  }
-  
-  // Update notification list
-  const notificationList = document.getElementById('notificationList');
-  
-  if (!notificationList) {
-    console.error('Notification list element not found');
-    return;
-  }
-  
-  if (filteredNotifications.length === 0) {
-    notificationList.innerHTML = '<div class="notification-empty">No notifications</div>';
-    return;
-  }
-  
-  notificationList.innerHTML = filteredNotifications.map(notification => {
-    if (!notification) return '';
-    
-    const timeAgo = getTimeAgo(notification.timestamp);
-    const unreadClass = notification.read ? '' : 'unread';
-    const title = notification.title || 'Notification';
-    const message = notification.message || 'No details';
-    const id = notification.id || '';
-    
-    // Determine icon and class based on type
-    let iconClass = 'report';
-    let iconName = 'fa-exclamation-triangle';
-    
-    if (notification.type === 'user') {
-      iconClass = 'user';
-      iconName = 'fa-user-plus';
-      
-      // Different icon based on user status
-      if (notification.status === 'inactive') {
-        iconName = 'fa-user-slash';
-      }
-    } else if (notification.type === 'report') {
-      const status = (notification.status || '').toLowerCase();
-      if (status === 'repaired' || status === 'completed') {
-        iconName = 'fa-check-circle';
-      } else if (status === 'ongoing') {
-        iconName = 'fa-tools';
-      } else {
-        iconName = 'fa-exclamation-triangle';
-      }
+
+    if (dropdownMenu) {
+      dropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
     }
-    
-    return `
-      <div class="notification-item ${unreadClass}" data-id="${id}">
-        <div class="notification-icon ${iconClass}">
-          <i class="fa ${iconName}"></i>
-        </div>
-        <div class="notification-content">
-          <p><strong>${title}</strong></p>
-          <p>${message}</p>
-          <div class="time">${timeAgo}</div>
-        </div>
-      </div>
-    `;
-  }).filter(html => html !== '').join('');
-  
-  // Add click listeners to mark as read
-  document.querySelectorAll('.notification-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const id = item.dataset.id;
-      if (id) markAsRead(id);
-    });
-  });
-}
-// Filter notifications
-function filterNotifications(notifications, filter) {
-  const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  
-  switch(filter) {
-    case 'report':
-      return notifications.filter(n => n.type === 'report');
-    case 'user':
-      return notifications.filter(n => n.type === 'user');
-    case '24h':
-      return notifications.filter(n => new Date(n.timestamp) > oneDayAgo);
-    default:
-      return notifications;
-  }
-}
-
-// Mark single notification as read
-function markAsRead(notificationId) {
-  const notificationsStr = localStorage.getItem('notifications') || '[]';
-  let notifications = JSON.parse(notificationsStr);
-  
-  const notification = notifications.find(n => n.id === notificationId);
-  if (notification) {
-    notification.read = true;
-    localStorage.setItem('notifications', JSON.stringify(notifications));
-    updateNotificationUI();
-  }
-}
-
-// Mark all as read
-function markAllAsRead() {
-  const notificationsStr = localStorage.getItem('notifications') || '[]';
-  let notifications = JSON.parse(notificationsStr);
-  
-  notifications.forEach(n => n.read = true);
-  localStorage.setItem('notifications', JSON.stringify(notifications));
-  updateNotificationUI();
-}
-
-// Clear all notifications
-function clearAllNotifications() {
-  if (confirm('Are you sure you want to clear all notifications?')) {
-    localStorage.setItem('notifications', '[]');
-    updateNotificationUI();
-  }
-}
-
-// Get time ago string
-function getTimeAgo(date) {
-  const seconds = Math.floor((new Date() - date) / 1000);
-  
-  const intervals = {
-    year: 31536000,
-    month: 2592000,
-    week: 604800,
-    day: 86400,
-    hour: 3600,
-    minute: 60
-  };
-  
-  for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-    const interval = Math.floor(seconds / secondsInUnit);
-    if (interval >= 1) {
-      return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
-    }
-  }
-  
-  return 'Just now';
-}
-
-// Toggle notification menu
-const notificationBell = document.getElementById('notificationBell');
-const notificationMenu = document.getElementById('notificationMenu');
-
-notificationBell.addEventListener('click', (e) => {
-  e.stopPropagation();
-  notificationMenu.classList.toggle('show');
-  
-  // Close profile dropdown if open
-  document.getElementById('dropdownMenu').classList.remove('show');
-});
-
-// Filter buttons
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    updateNotificationUI();
-  });
-});
-
-// Mark all as read button
-document.getElementById('markAllReadBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  markAllAsRead();
-});
-
-// Clear notifications button
-document.getElementById('clearNotificationsBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  clearAllNotifications();
-});
-
-// Profile dropdown toggle
-const profileToggle = document.getElementById('profileToggle');
-const dropdownMenu = document.getElementById('dropdownMenu');
-
-profileToggle.addEventListener('click', (e) => {
-  e.stopPropagation();
-  dropdownMenu.classList.toggle('show');
-  
-  // Close notification menu if open
-  notificationMenu.classList.remove('show');
-});
-
-// Close dropdowns when clicking outside
-document.addEventListener('click', () => {
-  notificationMenu.classList.remove('show');
-  dropdownMenu.classList.remove('show');
-});
-
-// Prevent closing when clicking inside menus
-notificationMenu.addEventListener('click', (e) => {
-  e.stopPropagation();
-});
-
-dropdownMenu.addEventListener('click', (e) => {
-  e.stopPropagation();
-});
   </script>
 </body>
 </html>

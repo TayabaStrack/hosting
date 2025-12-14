@@ -559,7 +559,7 @@ td button:disabled{background:#ccc;cursor:not-allowed;opacity:0.6}
 <script type="module">
   // ===== FIREBASE IMPORTS =====
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut,  setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, getDoc, getDocs, doc, updateDoc, setDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -577,93 +577,14 @@ td button:disabled{background:#ccc;cursor:not-allowed;opacity:0.6}
   const db = getFirestore(app);
   const storage = getStorage(app);
 
-      setPersistence(auth, browserSessionPersistence)
-  .then(() => {
-    console.log("Auth persistence set to SESSION");
-  })
-  .catch((error) => {
-    console.error("Error setting persistence:", error);
-  });
-   let isInternalNavigation = false;
-let isLoggingOut = false;
-let autoLogoutInitialized = false;
-
-function setupAutoLogout(auth) {
-  if (autoLogoutInitialized) {
-    console.log("⚠️ Auto-logout already initialized");
-    return;
-  }
-  autoLogoutInitialized = true;
-
-  // ✅ Track ALL link clicks (including profile links)
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('a');
-    if (link && link.href) {
-      try {
-        const linkUrl = new URL(link.href, window.location.href);
-        const currentOrigin = window.location.origin;
-        
-        // Check if it's an internal link
-        if (linkUrl.origin === currentOrigin) {
-          isInternalNavigation = true;
-          console.log("🔗 Internal navigation detected:", link.href);
-          
-          // ✅ LONGER timeout - 3 seconds to ensure navigation completes
-          setTimeout(() => {
-            isInternalNavigation = false;
-          }, 3000);
-        }
-      } catch (err) {
-        // If URL parsing fails, treat as internal navigation to be safe
-        isInternalNavigation = true;
-        setTimeout(() => {
-          isInternalNavigation = false;
-        }, 3000);
-      }
-    }
-  }, true); // ✅ Use capture phase to catch all clicks
-
-  // ✅ IMPROVED: Only logout on actual page close, not navigation
-  window.addEventListener('beforeunload', (e) => {
-    // Don't logout if it's internal navigation
-    if (isInternalNavigation) {
-      console.log("✅ Internal navigation - NOT logging out");
-      return;
-    }
-    
-    // Only logout on actual tab/browser close
-    if (!isLoggingOut) {
-      console.log("🚪 Tab/browser closing - logging out");
-      isLoggingOut = true;
-      
-      // Use synchronous approach for reliable logout on page close
-      try {
-        signOut(auth);
-        sessionStorage.clear();
-      } catch (error) {
-        console.error("❌ Error during auto logout:", error);
-      }
-    }
-  });
-
-  // ✅ Handle browser back/forward button
-  window.addEventListener('popstate', async (e) => {
-    if (!isInternalNavigation && !isLoggingOut) {
-      console.log("⬅️ Browser back button detected - logging out");
-      isLoggingOut = true;
-      try {
-        await signOut(auth);
-        sessionStorage.clear();
-        window.location.replace("login.html");
-      } catch (error) {
-        console.error("❌ Error during back navigation logout:", error);
-      }
-    }
-  });
-
-  console.log("✅ Auto-logout functionality initialized");
-}
-
+  // ===== SET SESSION PERSISTENCE =====
+  setPersistence(auth, browserSessionPersistence)
+    .then(() => {
+      console.log("Auth persistence set to SESSION");
+    })
+    .catch((error) => {
+      console.error("Error setting persistence:", error);
+    });
 
   // ===== DOM ELEMENTS =====
   const pendingBody = document.getElementById("pendingBody");
@@ -744,6 +665,12 @@ function setupAutoLogout(auth) {
     "Others"
   ];
 
+  // ===== INPUT VALIDATION FUNCTIONS =====
+  function validateNumericOnly(input) {
+    // Remove any characters that are not numbers
+    input.value = input.value.replace(/[^0-9]/g, '');
+  }
+
   // ===== AUDIT LOGGING FUNCTION =====
   async function logAuditEvent(action, actionType, module, description, additionalData = {}) {
     try {
@@ -788,87 +715,87 @@ function setupAutoLogout(auth) {
   }
 
   // ===== ACTION MENU FUNCTIONS (UPDATED) =====
-function createActionMenu(docId, hasInspectionDate, reportData) {
-  const container = document.createElement("div");
-  container.className = "action-menu-container";
-  
-  const btn = document.createElement("button");
-  btn.className = "action-menu-btn";
-  btn.innerHTML = '<i class="fa fa-ellipsis-v"></i>';
-  btn.onclick = (e) => {
-    e.stopPropagation();
+  function createActionMenu(docId, hasInspectionDate, reportData) {
+    const container = document.createElement("div");
+    container.className = "action-menu-container";
     
-    // Close all other dropdowns
-    document.querySelectorAll('.action-dropdown').forEach(d => {
-      if (d !== dropdown) d.classList.remove('show');
-    });
+    const btn = document.createElement("button");
+    btn.className = "action-menu-btn";
+    btn.innerHTML = '<i class="fa fa-ellipsis-v"></i>';
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      
+      // Close all other dropdowns
+      document.querySelectorAll('.action-dropdown').forEach(d => {
+        if (d !== dropdown) d.classList.remove('show');
+      });
+      
+      // Get button position
+      const rect = btn.getBoundingClientRect();
+      
+      // Position dropdown using fixed positioning
+      dropdown.style.left = (rect.right - 160) + 'px'; // 160px is dropdown width
+      dropdown.style.top = (rect.bottom + 5) + 'px';
+      
+      // Check if dropdown goes off bottom of screen
+      const dropdownHeight = 150; // Approximate height
+      if (rect.bottom + dropdownHeight > window.innerHeight) {
+        // Show above instead
+        dropdown.style.top = (rect.top - dropdownHeight - 5) + 'px';
+      }
+      
+      dropdown.classList.toggle('show');
+    };
     
-    // Get button position
-    const rect = btn.getBoundingClientRect();
+    const dropdown = document.createElement("div");
+    dropdown.className = "action-dropdown";
     
-    // Position dropdown using fixed positioning
-    dropdown.style.left = (rect.right - 160) + 'px'; // 160px is dropdown width
-    dropdown.style.top = (rect.bottom + 5) + 'px';
-    
-    // Check if dropdown goes off bottom of screen
-    const dropdownHeight = 150; // Approximate height
-    if (rect.bottom + dropdownHeight > window.innerHeight) {
-      // Show above instead
-      dropdown.style.top = (rect.top - dropdownHeight - 5) + 'px';
+    // Approve option
+    const approveOption = document.createElement("div");
+    approveOption.className = "action-option approve";
+    if (!hasInspectionDate) {
+      approveOption.innerHTML = '<i class="fa fa-exclamation-triangle"></i> <span>Approve</span>';
+      approveOption.title = "Inspection date must be set before approval";
+      approveOption.style.opacity = "0.8";
+    } else {
+      approveOption.innerHTML = '<i class="fa fa-check"></i> <span>Approve</span>';
     }
+    approveOption.onclick = async (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove('show');
+      await approveReportById(docId, reportData, hasInspectionDate);
+    };
     
-    dropdown.classList.toggle('show');
-  };
-  
-  const dropdown = document.createElement("div");
-  dropdown.className = "action-dropdown";
-  
-  // Approve option
-  const approveOption = document.createElement("div");
-  approveOption.className = "action-option approve";
-  if (!hasInspectionDate) {
-    approveOption.innerHTML = '<i class="fa fa-exclamation-triangle"></i> <span>Approve</span>';
-    approveOption.title = "Inspection date must be set before approval";
-    approveOption.style.opacity = "0.8";
-  } else {
-    approveOption.innerHTML = '<i class="fa fa-check"></i> <span>Approve</span>';
+    // Decline option
+    const declineOption = document.createElement("div");
+    declineOption.className = "action-option decline";
+    declineOption.innerHTML = '<i class="fa fa-times"></i> <span>Decline</span>';
+    declineOption.onclick = async (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove('show');
+      await openDeclineModalById(docId, reportData);
+    };
+    
+    // Edit option
+    const editOption = document.createElement("div");
+    editOption.className = "action-option edit";
+    editOption.innerHTML = '<i class="fa fa-edit"></i> <span>Edit</span>';
+    editOption.onclick = async (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove('show');
+      await openEditPendingModalById(docId);
+    };
+    
+    dropdown.appendChild(approveOption);
+    dropdown.appendChild(declineOption);
+    dropdown.appendChild(editOption);
+    
+    // Append dropdown to body instead of container
+    document.body.appendChild(dropdown);
+    container.appendChild(btn);
+    
+    return container;
   }
-  approveOption.onclick = async (e) => {
-    e.stopPropagation();
-    dropdown.classList.remove('show');
-    await approveReportById(docId, reportData, hasInspectionDate);
-  };
-  
-  // Decline option
-  const declineOption = document.createElement("div");
-  declineOption.className = "action-option decline";
-  declineOption.innerHTML = '<i class="fa fa-times"></i> <span>Decline</span>';
-  declineOption.onclick = async (e) => {
-    e.stopPropagation();
-    dropdown.classList.remove('show');
-    await openDeclineModalById(docId, reportData);
-  };
-  
-  // Edit option
-  const editOption = document.createElement("div");
-  editOption.className = "action-option edit";
-  editOption.innerHTML = '<i class="fa fa-edit"></i> <span>Edit</span>';
-  editOption.onclick = async (e) => {
-    e.stopPropagation();
-    dropdown.classList.remove('show');
-    await openEditPendingModalById(docId);
-  };
-  
-  dropdown.appendChild(approveOption);
-  dropdown.appendChild(declineOption);
-  dropdown.appendChild(editOption);
-  
-  // Append dropdown to body instead of container
-  document.body.appendChild(dropdown);
-  container.appendChild(btn);
-  
-  return container;
-}
 
   // Close action menus when clicking outside
   document.addEventListener('click', (e) => {
@@ -1373,7 +1300,6 @@ function createActionMenu(docId, hasInspectionDate, reportData) {
     if (timestamp.toDate) date = timestamp.toDate();
     else if (typeof timestamp === 'string') date = new Date(timestamp);
     else return timestamp;
-    
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const m = months[date.getMonth()];
     const d = String(date.getDate()).padStart(2,'0');
@@ -1391,7 +1317,6 @@ function createActionMenu(docId, hasInspectionDate, reportData) {
     if (timestamp.toDate) date = timestamp.toDate();
     else if (typeof timestamp === 'string') date = new Date(timestamp);
     else return "Not Set";
-    
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const m = months[date.getMonth()];
     const d = String(date.getDate()).padStart(2,'0');
@@ -1443,24 +1368,24 @@ function createActionMenu(docId, hasInspectionDate, reportData) {
       option.textContent = cat;
       categoryFilter.appendChild(option);
     });
-    
+
     issueFilter.innerHTML = '<option value="">All Issues</option>';
     ISSUES.forEach(iss => {
       const option = document.createElement('option');
       option.value = iss;
-      option.textContent = iss;
-      issueFilter.appendChild(option);
-    });
-  }
+option.textContent = iss;
+issueFilter.appendChild(option);
+});
+}
+function applyFilters() {
+const searchTerm = searchPending.value.toLowerCase();
+const selectedCategory = categoryFilter.value;
+const selectedIssue = issueFilter.value;
+let hasActiveFilters = selectedCategory || selectedIssue;
+clearFiltersBtn.style.display = hasActiveFilters ? 'block' : 'none';
 
-  function applyFilters() {
-    const searchTerm = searchPending.value.toLowerCase();
-    const selectedCategory = categoryFilter.value;
-    const selectedIssue = issueFilter.value;
-    
-    let hasActiveFilters = selectedCategory || selectedIssue;
-    clearFiltersBtn.style.display = hasActiveFilters ? 'block' : 'none';
 activeFilters.innerHTML = '';
+
 if (selectedCategory) {
   const tag = document.createElement('span');
   tag.className = 'filter-tag';
@@ -1471,6 +1396,7 @@ if (selectedCategory) {
   });
   activeFilters.appendChild(tag);
 }
+
 if (selectedIssue) {
   const tag = document.createElement('span');
   tag.className = 'filter-tag';
@@ -1601,8 +1527,7 @@ if (!reportDoc.exists()) {
 alert("Report not found");
 return;
 }
-  const data = reportDoc.data();
-  
+const data = reportDoc.data();
   // ✅ CHECK IF INSPECTION DATE IS SET
   if (!data.inspectionDate) {
     alert("Cannot approve this report. Please set an inspection date first by editing the report.");
@@ -1656,27 +1581,24 @@ reportToDecline = id;
 reportToDeclineData = reportData;
 // Get report data for logging
 try {
-  const reportDoc = await getDoc(doc(db, "reports", id));
-  if (reportDoc.exists()) {
-    reportToDeclineData = reportDoc.data();
-  }
-} catch (err) {
-  console.error("Error getting report data:", err);
+const reportDoc = await getDoc(doc(db, "reports", id));
+if (reportDoc.exists()) {
+reportToDeclineData = reportDoc.data();
 }
-
+} catch (err) {
+console.error("Error getting report data:", err);
+}
 declineReason.value = "";
 declineModal.style.display="flex";
 }
 async function confirmDecline(){
 const reason = declineReason.value.trim();
 if(!reason) {
-  alert("Please provide a reason for declining this report.");
-  declineReason.focus();
-  return;
+alert("Please provide a reason for declining this report.");
+declineReason.focus();
+return;
 }
-
 if(!reportToDecline) return;
-
 try {
   await updateDoc(doc(db, "reports", reportToDecline), {
     status: "Declined",
@@ -1713,12 +1635,11 @@ try {
 async function openEditPendingModalById(id){
 currentDocId = id;
 try {
-  const snap = await getDoc(doc(db, "reports", id));
-  if(!snap.exists()) {
-    alert("Report not found");
-    return;
-  }
-  
+const snap = await getDoc(doc(db, "reports", id));
+if(!snap.exists()) {
+alert("Report not found");
+return;
+}
   const data = snap.data();
   const position = await getReporterPosition(data.userId);
   
@@ -1746,6 +1667,16 @@ try {
   document.getElementById("editPendingLongitude").value = data.longitude || "";
   document.getElementById("editPendingProposedBudget").value = data.proposedBudget || "";
   document.getElementById("editPendingInspectionDate").value = formatDateForInput(data.inspectionDate);
+  
+  // ✅ ADD NUMERIC VALIDATION TO PROPOSED BUDGET FIELD
+  const budgetInput = document.getElementById("editPendingProposedBudget");
+  // Remove old event listeners by cloning the element
+  const newBudgetInput = budgetInput.cloneNode(true);
+  budgetInput.parentNode.replaceChild(newBudgetInput, budgetInput);
+  // Add new event listener
+  newBudgetInput.addEventListener("input", function() {
+    validateNumericOnly(this);
+  });
   
   const imagePath = data.incidentImage || data.imageUrl || data.image;
   const imgPreview = document.getElementById("editPendingImage");
@@ -1984,10 +1915,10 @@ await logAuditEvent(
 "Authentication",
 "Admin logged out from the system"
 );
-  await signOut(auth);
-  window.location.href = "login.html";
+await signOut(auth);
+window.location.href = "login.html";
 } catch(err) {
-  alert("Error logging out: " + err.message);
+alert("Error logging out: " + err.message);
 }
 }
 sidebarLogoutBtn.addEventListener("click", handleLogout);
@@ -2008,7 +1939,7 @@ try {
     
     const d = docSnap.data();
     
-    if(d.position!=="Admin") {
+    if(d.position!=="Admin" && d.position!=="Super Admin") {
       alert("Unauthorized access! Only Admins can access this page.");
       window.location.href="login.html";
       return;

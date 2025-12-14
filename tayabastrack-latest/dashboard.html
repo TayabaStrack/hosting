@@ -868,31 +868,33 @@ function setupAutoLogout(auth) {
     const labels = sortedBarangays.map(item => item[0]);
     const data = sortedBarangays.map(item => item[1]);
 
-barangayChart = new Chart(ctx, {
-  type: "line",
-  data: {
-    labels: labels,
-    datasets: [{
-      data: data,
-      borderColor: "#004aad",
-      backgroundColor: "rgba(0, 74, 173, 0.1)",
-      borderWidth: 2,
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: "#004aad",
-      pointBorderColor: "#fff",
-      pointBorderWidth: 2,
-      pointRadius: 4,
-      pointHoverRadius: 6
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false  // ✅ CHANGED TO FALSE
+    barangayChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Number of Reports",
+          data: data,
+          borderColor: "#004aad",
+          backgroundColor: "rgba(0, 74, 173, 0.1)",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#004aad",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
       },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
           tooltip: {
             enabled: true,
             backgroundColor: 'rgba(0, 74, 173, 0.8)',
