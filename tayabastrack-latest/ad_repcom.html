@@ -526,7 +526,7 @@ td {
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signOut, setPersistence, browserSessionPersistenc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, collection, query, orderBy, limit, onSnapshot, getDoc, doc, updateDoc, setDoc, getDocs, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -543,6 +543,13 @@ td {
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
+      setPersistence(auth, browserSessionPersistence)
+  .then(() => {
+    console.log("Auth persistence set to SESSION");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
  let isInternalNavigation = false;
 let isLoggingOut = false;
 let autoLogoutInitialized = false;
@@ -2226,8 +2233,6 @@ onAuthStateChanged(auth, async (user) => {
 if (!user) {
 window.location.href = "login.html";
 return;
-    setupAutoLogout(auth);
-
 }
 try {
   const userDocRef = doc(db, "users", user.uid);
