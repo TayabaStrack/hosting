@@ -520,7 +520,7 @@
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -535,6 +535,15 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    
+    setPersistence(auth, browserSessionPersistence)
+  .then(() => {
+    console.log("Auth persistence set to SESSION");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
     let isInternalNavigation = false;
 let isLoggingOut = false;
 let autoLogoutInitialized = false;
@@ -637,8 +646,6 @@ function setupAutoLogout(auth) {
         window.location.href = "login.html";
         return;
       }
-    setupAutoLogout(auth);
-
       try {
         const userDocRef = doc(db, "users", user.uid);
         
