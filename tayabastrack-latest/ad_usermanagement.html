@@ -1173,7 +1173,7 @@ justify-content: center;
 // FIREBASE INITIALIZATION
 // ==========================================
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, query, where, onSnapshot, getDocs, doc, updateDoc, deleteDoc, getDoc, addDoc, serverTimestamp, setDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1188,6 +1188,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+    setPersistence(auth, browserSessionPersistence)
+  .then(() => {
+    console.log("Auth persistence set to SESSION");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
 let isInternalNavigation = false;
 let isLoggingOut = false;
 let autoLogoutInitialized = false;
@@ -1407,14 +1415,34 @@ function normalizePosition(position) {
   return position.toString().toLowerCase().trim();
 }
 
+// ✅ FIXED: Improved position checking with better logging
 function isBarangayPosition(position) {
   const barangayPositions = [
-    'Barangay Captain', 'Barangay Kagawad', 'Barangay Secretary', 
-    'Barangay Treasurer', 'SK Chairperson', 'SK Kagawad', 
-    'Barangay Health Worker', 'Barangay Tanod', 'Barangay Nutritionist', 
-    'Day Care Worker'
+    'barangay captain', 
+    'barangay kagawad', 
+    'barangay secretary', 
+    'barangay treasurer', 
+    'sk chairperson', 
+    'sk kagawad', 
+    'barangay health worker', 
+    'barangay tanod', 
+    'barangay nutritionist', 
+    'day care worker'
   ];
-  return barangayPositions.some(pos => (position || "").includes(pos));
+  
+  if (!position) {
+    console.warn("⚠️ Position is null or undefined");
+    return false;
+  }
+  
+  const normalizedPosition = position.toString().toLowerCase().trim();
+  const isMatch = barangayPositions.some(pos => normalizedPosition.includes(pos));
+  
+  if (!isMatch) {
+    console.warn(`⚠️ Position "${position}" does not match barangay positions`);
+  }
+  
+  return isMatch;
 }
 
 function sortByBarangay(users) {
@@ -1516,31 +1544,34 @@ function renderPaginationControls(tableType) {
 
   html += `
       <button class="pagination-btn" onclick="window.changePage('${tableType}', ${state.currentPage + 1})" ${state.currentPage === totalPages ? 'disabled' : ''}>
-Next <i class="fa fa-chevron-right"></i>
-</button>
-<select class="page-size-select" onchange="window.changePageSize('${tableType}', this.value)">
-<option value="5" ${state.pageSize === 5 ? 'selected' : ''}>5 per page</option>
-<option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10 per page</option>
-<option value="25" ${state.pageSize === 25 ? 'selected' : ''}>25 per page</option>
-<option value="50" ${state.pageSize === 50 ? 'selected' : ''}>50 per page</option>
-</select>
-</div>
-`;
-paginationEl.innerHTML = html;
+        Next <i class="fa fa-chevron-right"></i>
+      </button>
+      <select class="page-size-select" onchange="window.changePageSize('${tableType}', this.value)">
+        <option value="5" ${state.pageSize === 5 ? 'selected' : ''}>5 per page</option>
+        <option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10 per page</option>
+        <option value="25" ${state.pageSize === 25 ? 'selected' : ''}>25 per page</option>
+        <option value="50" ${state.pageSize === 50 ? 'selected' : ''}>50 per page</option>
+      </select>
+    </div>
+  `;
+  paginationEl.innerHTML = html;
 }
+
 window.changePage = function(tableType, pageNum) {
-const state = paginationState[tableType];
-const { totalPages } = calculatePagination(tableType);
-if (pageNum < 1 || pageNum > totalPages) return;
-state.currentPage = pageNum;
-updateTableDisplay(tableType);
+  const state = paginationState[tableType];
+  const { totalPages } = calculatePagination(tableType);
+  if (pageNum < 1 || pageNum > totalPages) return;
+  state.currentPage = pageNum;
+  updateTableDisplay(tableType);
 };
+
 window.changePageSize = function(tableType, newSize) {
-const state = paginationState[tableType];
-state.pageSize = parseInt(newSize);
-state.currentPage = 1;
-updateTableDisplay(tableType);
+  const state = paginationState[tableType];
+  state.pageSize = parseInt(newSize);
+  state.currentPage = 1;
+  updateTableDisplay(tableType);
 };
+
 function updateTableDisplay(tableType) {
     const { paginatedData } = calculatePagination(tableType);
     const tableBodyId = `${tableType}Table`;
@@ -1559,53 +1590,56 @@ function updateTableDisplay(tableType) {
 }
 
 function renderTableRows(tableType, data, tableBody) {
-tableBody.innerHTML = data.map(user => {
-const firstName = user.data.firstName || '';
-const lastName = user.data.surname || '';
-const email = user.data.email || '';
-const barangay = user.data.barangay || '';
-const position = user.data.position || '';
-const contact = user.data.phoneNumber || user.data.contact || '';
-const declinedDate = user.data.declinedAt
-? new Date(user.data.declinedAt.toDate?.() || user.data.declinedAt).toLocaleDateString()
-: '';
-let actions = '';
-if (tableType === 'pending') {
-  actions = `
-    <button class="approve" onclick="window.approveUser('${user.id}')">Approve</button>
-    <button class="decline" onclick="window.declineUser('${user.id}')">Decline</button>
-  `;
-} else if (tableType === 'active') {
-  actions = `
-    <button class="edit" onclick="window.openEditModal('${user.id}')">Edit</button>
-    <button class="inactive" onclick="window.inactivateUser('${user.id}')">Deactivate</button>
-  `;
-} else if (tableType === 'inactive') {
-  actions = `
-    <button class="activate" onclick="window.activateUser('${user.id}')">Activate</button>
-    <button class="decline" onclick="window.deleteUser('${user.id}')">Delete</button>
-  `;
-} else if (tableType === 'declined') {
-  actions = `
-    <button class="approve" onclick="window.reapproveUser('${user.id}')">Reapprove</button>
-    <button class="decline" onclick="window.permanentlyDeleteUser('${user.id}')">Delete</button>
-  `;
+  tableBody.innerHTML = data.map(user => {
+    const firstName = user.data.firstName || '';
+    const lastName = user.data.surname || '';
+    const email = user.data.email || '';
+    const barangay = user.data.barangay || '';
+    const position = user.data.position || '';
+    const contact = user.data.phoneNumber || user.data.contact || '';
+    const declinedDate = user.data.declinedAt
+      ? new Date(user.data.declinedAt.toDate?.() || user.data.declinedAt).toLocaleDateString()
+      : '';
+    
+    let actions = '';
+    if (tableType === 'pending') {
+      actions = `
+        <button class="approve" onclick="window.approveUser('${user.id}')">Approve</button>
+        <button class="decline" onclick="window.declineUser('${user.id}')">Decline</button>
+      `;
+    } else if (tableType === 'active') {
+      actions = `
+        <button class="edit" onclick="window.openEditModal('${user.id}')">Edit</button>
+        <button class="inactive" onclick="window.inactivateUser('${user.id}')">Deactivate</button>
+      `;
+    } else if (tableType === 'inactive') {
+      actions = `
+        <button class="activate" onclick="window.activateUser('${user.id}')">Activate</button>
+        <button class="decline" onclick="window.deleteUser('${user.id}')">Delete</button>
+      `;
+    } else if (tableType === 'declined') {
+      actions = `
+        <button class="approve" onclick="window.reapproveUser('${user.id}')">Reapprove</button>
+        <button class="decline" onclick="window.permanentlyDeleteUser('${user.id}')">Delete</button>
+      `;
+    }
+
+    const cols = tableType === 'declined' 
+      ? `<td>${firstName}</td><td>${lastName}</td><td>${email}</td><td>${barangay}</td><td>${position}</td><td>${contact}</td><td>${declinedDate}</td><td>${actions}</td>`
+      : `<td>${firstName}</td><td>${lastName}</td><td>${email}</td><td>${barangay}</td><td>${position}</td><td>${contact}</td><td>${actions}</td>`;
+
+    return `<tr>${cols}</tr>`;
+  }).join('');
 }
 
-const cols = tableType === 'declined' 
-  ? `<td>${firstName}</td><td>${lastName}</td><td>${email}</td><td>${barangay}</td><td>${position}</td><td>${contact}</td><td>${declinedDate}</td><td>${actions}</td>`
-  : `<td>${firstName}</td><td>${lastName}</td><td>${email}</td><td>${barangay}</td><td>${position}</td><td>${contact}</td><td>${actions}</td>`;
-
-return `<tr>${cols}</tr>`;
-}).join('');
-}
 function renderTable(tableBody, data, tableType) {
-const state = paginationState[tableType];
-state.filteredData = data;
-state.totalItems = data.length;
-state.currentPage = 1;
-updateTableDisplay(tableType);
+  const state = paginationState[tableType];
+  state.filteredData = data;
+  state.totalItems = data.length;
+  state.currentPage = 1;
+  updateTableDisplay(tableType);
 }
+
 // ==========================================
 // USER MANAGEMENT FUNCTIONS
 // ==========================================
@@ -1921,10 +1955,7 @@ editForm.addEventListener('submit', async (e) => {
 });
 
 // ==========================================
-// ADD USER MODAL
-// ==========================================
-// ==========================================
-// ADD USER MODAL - UPDATED WITH FIREBASE AUTH CREATION
+// ADD USER MODAL - WITH FIREBASE AUTH
 // ==========================================
 const addUserModal = document.getElementById("addUserModal");
 const closeAddModal = document.getElementById("closeAddModal");
@@ -1960,7 +1991,6 @@ window.toggleAddPasswordVisibility = function() {
   }
 };
 
-// Generate strong password function
 window.generateStrongPassword = function() {
   const length = 16;
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=';
@@ -1974,125 +2004,121 @@ window.generateStrongPassword = function() {
   password += 'abcdefghijklmnopqrstuvwxyz'[randomValues[1] % 26];
   password += '0123456789'[randomValues[2] % 10];
   password += '!@#$%^&*()_+-='[randomValues[3] % 14];
-  
   // Fill the rest randomly
-  for (let i = 4; i < length; i++) {
-    password += charset[randomValues[i] % charset.length];
-  }
-  
-  // Shuffle the password
-  password = password.split('').sort(() => 0.5 - Math.random()).join('');
-  
-  document.getElementById('addPassword').value = password;
-  document.getElementById('addPassword').type = 'text';
-  document.getElementById('toggleAddPassword').querySelector('i').classList.remove('fa-eye');
-  document.getElementById('toggleAddPassword').querySelector('i').classList.add('fa-eye-slash');
+for (let i = 4; i < length; i++) {
+password += charset[randomValues[i] % charset.length];
+}
+// Shuffle the password
+password = password.split('').sort(() => 0.5 - Math.random()).join('');
+document.getElementById('addPassword').value = password;
+document.getElementById('addPassword').type = 'text';
+document.getElementById('toggleAddPassword').querySelector('i').classList.remove('fa-eye');
+document.getElementById('toggleAddPassword').querySelector('i').classList.add('fa-eye-slash');
+};
+// ✅ FIXED: Improved add user function with better error handling
+addUserForm.addEventListener('submit', async (e) => {
+e.preventDefault();
+const firstName = document.getElementById('addFirstName').value.trim();
+const lastName = document.getElementById('addLastName').value.trim();
+const email = document.getElementById('addEmail').value.trim();
+const barangay = document.getElementById('addBarangay').value.trim();
+const position = document.getElementById('addPosition').value;
+const contact = document.getElementById('addContact').value.trim();
+const password = document.getElementById('addPassword').value;
+console.log("📝 Adding new user with data:", {
+firstName, lastName, email, barangay, position, contact
+});
+if (!password) {
+alert('Please enter a password!');
+return;
+}
+if (password.length < 8) {
+alert('Password must be at least 8 characters long!');
+return;
+}
+const currentUser = auth.currentUser;
+if (!currentUser) {
+alert("You must be logged in to add users");
+return;
+}
+try {
+// Hash the password (if you're using CryptoJS)
+const hashedPassword = typeof CryptoJS !== 'undefined'
+? CryptoJS.SHA256(password).toString()
+: password;
+// Create Firebase Auth account using secondary app
+console.log("🔧 Creating secondary Firebase app...");
+const secondaryApp = initializeApp(firebaseConfig, "Secondary-" + Date.now());
+const secondaryAuth = getAuth(secondaryApp);
+
+console.log("👤 Creating Firebase Auth account...");
+const userCredential = await createUserWithEmailAndPassword(
+  secondaryAuth, 
+  email, 
+  password
+);
+
+const newUid = userCredential.user.uid;
+console.log("✅ Auth account created with UID:", newUid);
+
+// Sign out from secondary app and clean up
+await signOut(secondaryAuth);
+await deleteApp(secondaryApp);
+console.log("🧹 Secondary app cleaned up");
+
+// Create user document in Firestore with the Auth UID
+const userRef = doc(db, "users", newUid);
+
+const userData = {
+  firstName,
+  surname: lastName,
+  email,
+  barangay,
+  position,
+  phoneNumber: contact,
+  password: password,
+  hashedPassword: hashedPassword,
+  status: "active",
+  role: "Official",
+  createdAt: serverTimestamp()
 };
 
-addUserForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+console.log("💾 Creating Firestore document with data:", userData);
+await setDoc(userRef, userData);
+console.log("✅ Firestore document created successfully");
 
-  const firstName = document.getElementById('addFirstName').value.trim();
-  const lastName = document.getElementById('addLastName').value.trim();
-  const email = document.getElementById('addEmail').value.trim();
-  const barangay = document.getElementById('addBarangay').value.trim();
-  const position = document.getElementById('addPosition').value;
-  const contact = document.getElementById('addContact').value.trim();
-  const password = document.getElementById('addPassword').value;
-
-  if (!password) {
-    alert('Please enter a password!');
-    return;
+await logAuditEvent(
+  "Barangay Official Added",
+  "add",
+  "Users",
+  `Added new barangay official: ${firstName} ${lastName}`,
+  {
+    targetUserEmail: email,
+    targetUserPosition: position,
+    targetUserId: newUid,
+    barangay: barangay
   }
+);
 
-  // Validate password strength
-  if (password.length < 8) {
-    alert('Password must be at least 8 characters long!');
-    return;
-  }
+addUserModal.classList.remove('show');
+addUserForm.reset();
 
-  const currentUser = auth.currentUser;
-  if (!currentUser) {
-    alert("You must be logged in to add users");
-    return;
-  }
-
-  try {
-    // Hash the password
-    const hashedPassword = CryptoJS.SHA256(password).toString();
-
-    // Create Firebase Auth account using secondary app
-    const secondaryApp = initializeApp(firebaseConfig, "Secondary-" + Date.now());
-    const secondaryAuth = getAuth(secondaryApp);
-
-    console.log("Creating Firebase Auth account for Barangay Official...");
-    const userCredential = await createUserWithEmailAndPassword(
-      secondaryAuth, 
-      email, 
-      password
-    );
-
-    const newUid = userCredential.user.uid;
-    console.log("Auth account created with UID:", newUid);
-
-    // Sign out from secondary app and clean up
-    await signOut(secondaryAuth);
-    await deleteApp(secondaryApp);
-    console.log("Secondary app cleaned up");
-
-    // Create user document in Firestore with the Auth UID
-    const userRef = doc(db, "users", newUid);
-    
-    const userData = {
-      firstName,
-      surname: lastName,
-      email,
-      barangay,
-      position,
-      phoneNumber: contact,
-      password: password,
-      hashedPassword: hashedPassword,
-      status: "active",
-      role: "Official",
-      createdAt: serverTimestamp()
-    };
-
-    await setDoc(userRef, userData);
-
-    await logAuditEvent(
-      "Barangay Official Added",
-      "add",
-      "Users",
-      `Added new barangay official: ${firstName} ${lastName}`,
-      {
-        targetUserEmail: email,
-        targetUserPosition: position,
-        targetUserId: newUid,
-        barangay: barangay
-      }
-    );
-
-    addUserModal.classList.remove('show');
-    addUserForm.reset();
-
-    alert(`✅ Barangay Official added successfully!\n\nFirebase Auth account created.\nUID: ${newUid}\n\nLogin Credentials:\nEmail: ${email}\nPassword: ${password}\n\nPlease save these credentials securely and share them with the official.`);
-
-  } catch (err) {
-    console.error("Error adding user:", err);
-    
-    if (err.code === 'auth/email-already-in-use') {
-      alert("Error: This email is already registered. Please use a different email address.");
-    } else if (err.code === 'auth/weak-password') {
-      alert("Error: The password is too weak. Please use a stronger password (at least 6 characters).");
-    } else if (err.code === 'auth/invalid-email') {
-      alert("Error: Invalid email format.");
-    } else {
-      alert("Error adding user: " + err.message);
-    }
-  }
+alert(`✅ Barangay Official added successfully!\n\nFirebase Auth account created.\nUID: ${newUid}\n\nLogin Credentials:\nEmail: ${email}\nPassword: ${password}\n\nPlease save these credentials securely and share them with the official.`);
+} catch (err) {
+console.error("❌ Error adding user:", err);
+if (err.code === 'auth/email-already-in-use') {
+  alert("Error: This email is already registered. Please use a different email address.");
+} else if (err.code === 'auth/weak-password') {
+  alert("Error: The password is too weak. Please use a stronger password (at least 6 characters).");
+} else if (err.code === 'auth/invalid-email') {
+  alert("Error: Invalid email format.");
+} else {
+  alert("Error adding user: " + err.message);
+}
+}
 });
 // ==========================================
-// NOTIFICATION SYSTEM - IMPROVED VERSION
+// NOTIFICATION SYSTEM
 // ==========================================
 async function setupRealtimeNotifications() {
 if (!localStorage.getItem('notifications')) {
@@ -2334,27 +2360,32 @@ updateNotificationUI();
 }
 }
 function getTimeAgo(date) {
-if (!date) return 'Recently';
-const dateObj = typeof date === 'string' ? new Date(date) : date;
-if (isNaN(dateObj.getTime())) return 'Recently';
-const seconds = Math.floor((new Date() - dateObj) / 1000);
-if (seconds < 0) return 'Just now';
-const intervals = {
-year: 31536000,
-month: 2592000,
-week: 604800,
-day: 86400,
-hour: 3600,
-minute: 60
-};
-for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+  if (!date) return 'Recently';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return 'Recently';
+  
+  const seconds = Math.floor((new Date() - dateObj) / 1000);
+  if (seconds < 0) return 'Just now';
+
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    week: 604800,
+    day: 86400,
+    hour: 3600,
+    minute: 60
+  };
+
+  for (const [unit, secondsInUnit] of Object.entries(intervals)) {
     const interval = Math.floor(seconds / secondsInUnit);
     if (interval >= 1) {
-        return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
+      // ✅ FIX: Properly close the return statement with backticks
+      return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
     }
-}
+  }
 
-return 'Just now';
+  return 'Just now';
 }
 function initNotificationListeners() {
 const notificationBell = document.getElementById('notificationBell');
@@ -2406,110 +2437,133 @@ notificationMenu.classList.remove('show');
 });
 }
 // ==========================================
-// REALTIME DATA LISTENERS
+// REALTIME DATA LISTENERS - WITH DEBUG LOGGING
 // ==========================================
 try {
+console.log("🔄 Setting up real-time listeners...");
+// Pending users
+const qPending = query(
+    collection(db, "users"),
+    where("status", "==", "pending")
+);
 
-    // Pending users
-    const qPending = query(
-        collection(db, "users"),
-        where("status", "==", "pending")
-    );
+onSnapshot(qPending, (snapshot) => {
+    console.log("📊 Pending users snapshot - Total docs:", snapshot.size);
+    allPendingUsers = [];
 
-    onSnapshot(qPending, (snapshot) => {
-        allPendingUsers = [];
-
-        snapshot.forEach((docSnap) => {
-            const u = docSnap.data();
-            if (isBarangayPosition(u.position)) {
-                allPendingUsers.push({ id: docSnap.id, data: u });
-            }
-        });
-
-        if (pendingCountEl) {
-            pendingCountEl.textContent = allPendingUsers.length;
+    snapshot.forEach((docSnap) => {
+        const u = docSnap.data();
+        console.log("  👤 Pending user:", u.firstName, u.surname, "Position:", u.position);
+        
+        if (isBarangayPosition(u.position)) {
+            allPendingUsers.push({ id: docSnap.id, data: u });
         }
-
-        renderTable(
-            pendingTable,
-            sortByBarangay(allPendingUsers),
-            "pending"
-        );
     });
 
-    // Active users
-    const qActive = query(
-        collection(db, "users"),
-        where("status", "==", "active")
+    console.log("✅ Total pending barangay users:", allPendingUsers.length);
+
+    if (pendingCountEl) {
+        pendingCountEl.textContent = allPendingUsers.length;
+    }
+
+    renderTable(
+        pendingTable,
+        sortByBarangay(allPendingUsers),
+        "pending"
     );
+});
 
-    onSnapshot(qActive, (snapshot) => {
-        allActiveUsers = [];
+// Active users
+const qActive = query(
+    collection(db, "users"),
+    where("status", "==", "active")
+);
 
-        snapshot.forEach((docSnap) => {
-            const u = docSnap.data();
-            if (isBarangayPosition(u.position)) {
-                allActiveUsers.push({ id: docSnap.id, data: u });
-            }
-        });
+onSnapshot(qActive, (snapshot) => {
+    console.log("📊 Active users snapshot - Total docs:", snapshot.size);
+    allActiveUsers = [];
 
-        if (activeCountEl) {
-            activeCountEl.textContent = allActiveUsers.length;
+    snapshot.forEach((docSnap) => {
+        const u = docSnap.data();
+        console.log("  👤 Active user:", u.firstName, u.surname, "Position:", u.position);
+        
+        if (isBarangayPosition(u.position)) {
+            allActiveUsers.push({ id: docSnap.id, data: u });
+            console.log("    ✅ Added to active list");
+        } else {
+            console.log("    ⚠️ Filtered out - not a barangay position");
         }
-
-        renderTable(activeTable, sortByBarangay(allActiveUsers), "active");
     });
 
-    // Inactive users
-    const qInactive = query(
-        collection(db, "users"),
-        where("status", "==", "inactive")
-    );
+    console.log("✅ Total active barangay users:", allActiveUsers.length);
 
-    onSnapshot(qInactive, (snapshot) => {
-        allInactiveUsers = [];
+    if (activeCountEl) {
+        activeCountEl.textContent = allActiveUsers.length;
+    }
 
-        snapshot.forEach((docSnap) => {
-            const u = docSnap.data();
-            if (isBarangayPosition(u.position)) {
-                allInactiveUsers.push({ id: docSnap.id, data: u });
-            }
-        });
+    renderTable(activeTable, sortByBarangay(allActiveUsers), "active");
+});
 
-        if (inactiveCountEl) {
-            inactiveCountEl.textContent = allInactiveUsers.length;
+// Inactive users
+const qInactive = query(
+    collection(db, "users"),
+    where("status", "==", "inactive")
+);
+
+onSnapshot(qInactive, (snapshot) => {
+    console.log("📊 Inactive users snapshot - Total docs:", snapshot.size);
+    allInactiveUsers = [];
+
+    snapshot.forEach((docSnap) => {
+        const u = docSnap.data();
+        console.log("  👤 Inactive user:", u.firstName, u.surname, "Position:", u.position);
+        
+        if (isBarangayPosition(u.position)) {
+            allInactiveUsers.push({ id: docSnap.id, data: u });
         }
-
-        renderTable(inactiveTable, sortByBarangay(allInactiveUsers), "inactive");
     });
 
-    // Declined users
-    const qDeclined = query(
-        collection(db, "users"),
-        where("status", "==", "declined")
-    );
+    console.log("✅ Total inactive barangay users:", allInactiveUsers.length);
 
-    onSnapshot(qDeclined, (snapshot) => {
-        allDeclinedUsers = [];
+    if (inactiveCountEl) {
+        inactiveCountEl.textContent = allInactiveUsers.length;
+    }
 
-        snapshot.forEach((docSnap) => {
-            const u = docSnap.data();
-            if (isBarangayPosition(u.position)) {
-                allDeclinedUsers.push({ id: docSnap.id, data: u });
-            }
-        });
+    renderTable(inactiveTable, sortByBarangay(allInactiveUsers), "inactive");
+});
 
-        if (declinedCountEl) {
-            declinedCountEl.textContent = allDeclinedUsers.length;
+// Declined users
+const qDeclined = query(
+    collection(db, "users"),
+    where("status", "==", "declined")
+);
+
+onSnapshot(qDeclined, (snapshot) => {
+    console.log("📊 Declined users snapshot - Total docs:", snapshot.size);
+    allDeclinedUsers = [];
+
+    snapshot.forEach((docSnap) => {
+        const u = docSnap.data();
+        console.log("  👤 Declined user:", u.firstName, u.surname, "Position:", u.position);
+        
+        if (isBarangayPosition(u.position)) {
+            allDeclinedUsers.push({ id: docSnap.id, data: u });
         }
-
-        renderTable(declinedTable, sortByBarangay(allDeclinedUsers), "declined");
     });
 
+    console.log("✅ Total declined barangay users:", allDeclinedUsers.length);
+
+    if (declinedCountEl) {
+        declinedCountEl.textContent = allDeclinedUsers.length;
+    }
+
+    renderTable(declinedTable, sortByBarangay(allDeclinedUsers), "declined");
+});
+
+console.log("✅ All real-time listeners set up successfully");
 } catch (err) {
-    console.error("Error setting up collections:", err);
+console.error("❌ Error setting up collections:", err);
 }
-
 // ==========================================
 // SEARCH FUNCTIONALITY
 // ==========================================
@@ -2548,14 +2602,16 @@ return;
 try {
 const userDocRef = doc(db, "users", user.uid);
 onSnapshot(userDocRef, async (userDocSnap) => {
-if (!userDocSnap.exists()) {
-window.location.href = "index.html";
-return;
-}
+  if (!userDocSnap.exists()) {
+    window.location.href = "index.html";
+    return;
+  }
+
   const data = userDocSnap.data();
   const normalizedPosition = normalizePosition(data.position);
   
-  if (normalizedPosition !== "admin") {
+  // ✅ Allow both Admin and Super Admin
+  if (normalizedPosition !== "admin" && normalizedPosition !== "super admin") {
     alert("Unauthorized access!");
     await signOut(auth);
     window.location.href = "index.html";
@@ -2564,14 +2620,17 @@ return;
   
   const displayName = data.name || data.firstName || "Admin";
   const photoURL = data.profilePic || data.photoURL || "image.png";
+  
   if (navUsername) navUsername.textContent = displayName;
   if (navAvatar) navAvatar.src = photoURL;
 });
 
 initNotificationListeners();
 await setupRealtimeNotifications();
+
+console.log("✅ Authentication and initialization complete");
 } catch (err) {
-console.error("Auth error:", err);
+console.error("❌ Auth error:", err);
 window.location.href = "index.html";
 }
 });
@@ -2583,19 +2642,21 @@ if (logoutBtn) {
 logoutBtn.addEventListener("click", async () => {
 if (!confirm("Are you sure you want to logout?")) return;
 try {
-await logAuditEvent(
-"Logged Out",
-"logout",
-"Authentication",
-"Admin logged out from the system"
-);
-await signOut(auth);
-window.location.href = "index.html";
+  await logAuditEvent(
+    "Logged Out",
+    "logout",
+    "Authentication",
+    "Admin logged out from the system"
+  );
+  
+  await signOut(auth);
+  window.location.href = "index.html";
 } catch (err) {
-console.error("Logout error:", err);
+  console.error("❌ Logout error:", err);
 }
 });
 }
+console.log("✅ Script loaded successfully");
 </script>
 </body>
 </html>
