@@ -1393,175 +1393,175 @@ function setupAutoLogout(auth) {
       console.log("Notifications system active");
     }
 
-    document.getElementById("addUserForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const firstName = document.getElementById("firstName").value.trim();
-      const lastName = document.getElementById("lastName").value.trim();
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const barangay = document.getElementById("barangay").value.trim();
-      const position = document.getElementById("position").value;
-      const password = document.getElementById("password").value;
+document.getElementById("addUserForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const firstName = document.getElementById("firstName").value.trim();
+  const lastName = document.getElementById("lastName").value.trim();
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const barangay = document.getElementById("barangay").value.trim();
+  const position = document.getElementById("position").value;
+  const password = document.getElementById("password").value;
 
-      const isAdminPosition = position === "Super Admin" || position === "Admin";
+  const isAdminPosition = position === "Super Admin" || position === "Admin";
 
-      if (!password) {
-        alert("Password is required for all users");
-        return;
+  if (!password) {
+    alert("Password is required for all users");
+    return;
+  }
+
+  const hashedPassword = CryptoJS.SHA256(password).toString();
+
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    alert("You must be logged in to add users");
+    return;
+  }
+
+  try {
+    let newUid;
+    let userRef;
+
+    // Only create Firebase Auth account for Barangay Officials
+    if (!isAdminPosition) {
+      const secondaryApp = initializeApp(firebaseConfig, "Secondary-" + Date.now());
+      const secondaryAuth = getAuth(secondaryApp);
+
+      console.log("Creating Firebase Auth account for Official...");
+      const userCredential = await createUserWithEmailAndPassword(
+        secondaryAuth, 
+        email, 
+        password
+      );
+
+      newUid = userCredential.user.uid;
+      console.log("Auth account created with UID:", newUid);
+
+      await signOut(secondaryAuth);
+      await deleteApp(secondaryApp);
+      console.log("Secondary app cleaned up");
+    } else {
+      newUid = doc(collection(db, "users")).id;
+      console.log("Admin pending approval, temporary ID:", newUid);
+    }
+
+    userRef = doc(db, "users", newUid);
+
+    // ✅ FIXED: Use "surname" and lowercase "active"/"pending"
+    const userData = {
+      firstName,
+      surname: lastName,        // ✅ Changed from "lastName" to "surname"
+      name,
+      email,
+      barangay,
+      position,
+      password,
+      hashedPassword,
+      createdAt: serverTimestamp()
+    };
+
+    if (isAdminPosition) {
+      userData.status = "pending";      // ✅ Changed from "Pending" to "pending"
+      userData.role = "Admin";
+    } else {
+      userData.status = "active";       // ✅ Changed from "Active" to "active"
+      userData.role = "Official";
+      userData.phoneNumber = "";        // ✅ Add phoneNumber field
+    }
+
+    await setDoc(userRef, userData);
+
+    await logAuditEvent(
+      "User Added",
+      "add",
+      "Users",
+      `Added new user: ${name}`,
+      {
+        targetUserEmail: email,
+        targetUserPosition: position,
+        targetUserId: newUid,
+        barangay: barangay
       }
+    );
 
-      const hashedPassword = CryptoJS.SHA256(password).toString();
+    closeModal();
+    document.getElementById("addUserForm").reset();
 
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        alert("You must be logged in to add users");
-        return;
-      }
+    if (isAdminPosition) {
+      alert(`Admin user added successfully (Pending approval)!\n\nUID: ${newUid}\n\nFirebase Auth account will be created upon approval.\nEmail: ${email}\nPassword: ${password}`);
+    } else {
+      alert(`Barangay Official added successfully!\n\nFirebase Auth account created.\nUID: ${newUid}\n\nThey can login with:\nEmail: ${email}\nPassword: ${password}`);
+    }
+  } catch (err) {
+    console.error("Error adding user:", err);
+    
+    if (err.code === 'auth/email-already-in-use') {
+      alert("Error: This email is already registered. Please use a different email address.");
+    } else if (err.code === 'auth/weak-password') {
+      alert("Error: The password is too weak. Please use a stronger password (at least 6 characters).");
+    } else if (err.code === 'auth/invalid-email') {
+      alert("Error: Invalid email format.");
+    } else {
+      alert("Error: " + err.message);
+    }
+  }
+});
 
-    try {
-      let newUid;
-      let userRef;
+ document.getElementById("editUserForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const userId = document.getElementById("editUserId").value;
+  const firstName = document.getElementById("editFirstName").value.trim();
+  const lastName = document.getElementById("editLastName").value.trim();
+  const name = document.getElementById("editName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const barangay = document.getElementById("editBarangay").value.trim();
+  const position = document.getElementById("editPosition").value;
 
-      // Only create Firebase Auth account for Barangay Officials
-      // Admins get their account created when approved
-      if (!isAdminPosition) {
-        const secondaryApp = initializeApp(firebaseConfig, "Secondary-" + Date.now());
-        const secondaryAuth = getAuth(secondaryApp);
+  try {
+    const userRef = doc(db, "users", userId);
+    const oldDoc = await getDoc(userRef);
+    const oldData = oldDoc.data();
 
-        console.log("Creating Firebase Auth account for Official...");
-        const userCredential = await createUserWithEmailAndPassword(
-          secondaryAuth, 
-          email, 
-          password
-        );
-
-        newUid = userCredential.user.uid;
-        console.log("Auth account created with UID:", newUid);
-
-        await signOut(secondaryAuth);
-        await deleteApp(secondaryApp);
-        console.log("Secondary app cleaned up");
-      } else {
-        // For admins, generate a temporary document ID
-        newUid = doc(collection(db, "users")).id;
-        console.log("Admin pending approval, temporary ID:", newUid);
-      }
-
-      userRef = doc(db, "users", newUid);
-
-        const userData = {
-          firstName,
-          lastName,
-          name,
-          email,
-          barangay,
-          position,
-          password,
-          hashedPassword,
-          createdAt: serverTimestamp()
-        };
-
-        if (isAdminPosition) {
-          userData.status = "Pending";
-          userData.role = "Admin";
-        } else {
-          userData.status = "Active";
-          userData.role = "Official";
-        }
-
-        await setDoc(userRef, userData);
-
-        await logAuditEvent(
-          "User Added",
-          "add",
-          "Users",
-          `Added new user: ${name}`,
-          {
-            targetUserEmail: email,
-            targetUserPosition: position,
-            targetUserId: newUid,
-            barangay: barangay
-          }
-        );
-
-      closeModal();
-      document.getElementById("addUserForm").reset();
-
-      if (isAdminPosition) {
-        alert(`Admin user added successfully (Pending approval)!\n\nUID: ${newUid}\n\nFirebase Auth account will be created upon approval.\nEmail: ${email}\nPassword: ${password}`);
-      } else {
-        alert(`Barangay Official added successfully!\n\nFirebase Auth account created.\nUID: ${newUid}\n\nThey can login with:\nEmail: ${email}\nPassword: ${password}`);
-      }
-      } catch (err) {
-        console.error("Error adding user:", err);
-        
-        if (err.code === 'auth/email-already-in-use') {
-          alert("Error: This email is already registered. Please use a different email address.");
-        } else if (err.code === 'auth/weak-password') {
-          alert("Error: The password is too weak. Please use a stronger password (at least 6 characters).");
-        } else if (err.code === 'auth/invalid-email') {
-          alert("Error: Invalid email format.");
-        } else {
-          alert("Error: " + err.message);
-        }
-      }
+    // ✅ FIXED: Use "surname" instead of "lastName"
+    await updateDoc(userRef, {
+      firstName,
+      surname: lastName,  // ✅ Changed from "lastName" to "surname"
+      name,
+      email,
+      barangay,
+      position,
+      updatedAt: serverTimestamp()
     });
 
-    document.getElementById("editUserForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const userId = document.getElementById("editUserId").value;
-      const firstName = document.getElementById("editFirstName").value.trim();
-      const lastName = document.getElementById("editLastName").value.trim();
-      const name = document.getElementById("editName").value.trim();
-      const email = document.getElementById("editEmail").value.trim();
-      const barangay = document.getElementById("editBarangay").value.trim();
-      const position = document.getElementById("editPosition").value;
+    const changes = [];
+    if (oldData.firstName !== firstName) changes.push(`First Name: "${oldData.firstName}" → "${firstName}"`);
+    if (oldData.surname !== lastName) changes.push(`Last Name: "${oldData.surname}" → "${lastName}"`);  // ✅ Changed
+    if (oldData.name !== name) changes.push(`Name: "${oldData.name}" → "${name}"`);
+    if (oldData.email !== email) changes.push(`Email: "${oldData.email}" → "${email}"`);
+    if (oldData.barangay !== barangay) changes.push(`Barangay: "${oldData.barangay}" → "${barangay}"`);
+    if (oldData.position !== position) changes.push(`Position: "${oldData.position}" → "${position}"`);
 
-      try {
-        const userRef = doc(db, "users", userId);
-        const oldDoc = await getDoc(userRef);
-        const oldData = oldDoc.data();
-
-        await updateDoc(userRef, {
-          firstName,
-          lastName,
-          name,
-          email,
-          barangay,
-          position,
-          updatedAt: serverTimestamp()
-        });
-
-        const changes = [];
-        if (oldData.firstName !== firstName) changes.push(`First Name: "${oldData.firstName}" → "${firstName}"`);
-        if (oldData.lastName !== lastName) changes.push(`Last Name: "${oldData.lastName}" → "${lastName}"`);
-        if (oldData.name !== name) changes.push(`Name: "${oldData.name}" → "${name}"`);
-        if (oldData.email !== email) changes.push(`Email: "${oldData.email}" → "${email}"`);
-        if (oldData.barangay !== barangay) changes.push(`Barangay: "${oldData.barangay}" → "${barangay}"`);
-        if (oldData.position !== position) changes.push(`Position: "${oldData.position}" → "${position}"`);
-
-        await logAuditEvent(
-          "User Updated",
-          "edit",
-          "Users",
-          `Updated user: ${name}`,
-          {
-            targetUserId: userId,
-            targetUserEmail: email,
-            changes: changes.join(", "),
-            beforeValue: JSON.stringify(oldData),
-            afterValue: JSON.stringify({ firstName, lastName, name, email, barangay, position })
-          }
-        );
-
-        closeEditModal();
-        alert("User updated successfully!");
-      } catch (err) {
-        console.error("Error updating user:", err);
-        alert("Error: " + err.message);
+    await logAuditEvent(
+      "User Updated",
+      "edit",
+      "Users",
+      `Updated user: ${name}`,
+      {
+        targetUserId: userId,
+        targetUserEmail: email,
+        changes: changes.join(", "),
+        beforeValue: JSON.stringify(oldData),
+        afterValue: JSON.stringify({ firstName, surname: lastName, name, email, barangay, position })
       }
-    });
+    );
 
+    closeEditModal();
+    alert("User updated successfully!");
+  } catch (err) {
+    console.error("Error updating user:", err);
+    alert("Error: " + err.message);
+  }
+});
     const q = query(collection(db, "users"));
     onSnapshot(q, (snap) => {
       paginationState.pending.data = [];
@@ -1614,18 +1614,18 @@ function setupAutoLogout(auth) {
           }
         }
 
-        if (isBrgyOfficial) {
-          const contactDisplay = u.phoneNumber || u.contact || "—";
-          const rowHtml = `
-            <td>${u.firstName || ""}</td>
-            <td>${u.lastName || u.surname || ""}</td>
-            <td>${u.email || ""}</td>
-            <td>${u.barangay || ""}</td>
-            <td>${u.position || ""}</td>
-            <td>${contactDisplay}</td>
-            <td>${statusBadge}</td>
-            <td><span class="view-only-cell"><i class="fa fa-eye"></i> View Only</span></td>
-          `;
+if (isBrgyOfficial) {
+  const contactDisplay = u.phoneNumber || u.contact || "—";
+  const rowHtml = `
+    <td>${u.firstName || ""}</td>
+    <td>${u.surname || u.lastName || ""}</td>  
+    <td>${u.email || ""}</td>
+    <td>${u.barangay || ""}</td>
+    <td>${u.position || ""}</td>
+    <td>${contactDisplay}</td>
+    <td>${statusBadge}</td>
+    <td><span class="view-only-cell"><i class="fa fa-eye"></i> View Only</span></td>
+  `;
 
           if (status === "active") {
             activeOfficialsData.push({ html: rowHtml, barangay: u.barangay || "" });
@@ -1647,125 +1647,153 @@ function setupAutoLogout(auth) {
       });
     });
 
-    window.approveUser = async (pendingDocId) => {
-      if (!confirm("Approve this user? Their Firebase Auth account will be created and status will be changed to Active.")) return;
-      
+window.approveUser = async (pendingDocId) => {
+  if (!confirm("Approve this user? Their Firebase Auth account will be created and status will be changed to Active.")) return;
+  
+  try {
+    console.log("🔄 Approving user with document ID:", pendingDocId);
+    
+    const userRef = doc(db, "users", pendingDocId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      alert("User not found.");
+      return;
+    }
+    
+    const userData = userDoc.data();
+    console.log("User data retrieved:", userData);
+
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary-" + Date.now());
+    const secondaryAuth = getAuth(secondaryApp);
+
+    console.log("Creating Firebase Auth account for approved admin...");
+    const userCredential = await createUserWithEmailAndPassword(
+      secondaryAuth, 
+      userData.email, 
+      userData.password
+    );
+
+    const authUid = userCredential.user.uid;
+    console.log("Auth account created with UID:", authUid);
+
+    await signOut(secondaryAuth);
+    await deleteApp(secondaryApp);
+
+    if (authUid !== pendingDocId) {
+      console.log("Migrating user document from temp ID to Auth UID...");
+      const newUserRef = doc(db, "users", authUid);
+      await setDoc(newUserRef, {
+        ...userData,
+        status: "active",              // ✅ Changed from "Active" to "active"
+        approvedAt: serverTimestamp()
+      });
+      await deleteDoc(userRef);
+      console.log("User document migrated successfully");
+    } else {
+      await updateDoc(userRef, {
+        status: "active",              // ✅ Changed from "Active" to "active"
+        approvedAt: serverTimestamp()
+      });
+    }
+    
+    console.log("User approved successfully");
+
+    await logAuditEvent(
+      "User Approved",
+      "approve",
+      "Users",
+      `Approved user: ${userData.name}`,
+      {
+        beforeValue: "pending",        // ✅ Changed from "Pending" to "pending"
+        afterValue: "active",          // ✅ Changed from "Active" to "active"
+        targetUserId: authUid,
+        targetUserEmail: userData.email,
+        targetUserPosition: userData.position
+      }
+    );
+
+    alert(`✅ ${userData.name} has been approved successfully!\n\nFirebase Auth account created.\nThey can now login with:\nEmail: ${userData.email}\nPassword: (the password you set)`);
+    
+  } catch (err) {
+    console.error("Error approving user:", err);
+    if (err.code === 'auth/email-already-in-use') {
+      alert("Error: This email already has a Firebase Auth account. Updating status only...");
       try {
-        console.log("🔄 Approving user with document ID:", pendingDocId);
-        
-        const userRef = doc(db, "users", pendingDocId);
-        const userDoc = await getDoc(userRef);
-        
-        if (!userDoc.exists()) {
-          alert("User not found.");
-          return;
-        }
-        
-        const userData = userDoc.data();
-        console.log("User data retrieved:", userData);
-
-        // Create Firebase Auth account for the approved admin
-        const secondaryApp = initializeApp(firebaseConfig, "Secondary-" + Date.now());
-        const secondaryAuth = getAuth(secondaryApp);
-
-        console.log("Creating Firebase Auth account for approved admin...");
-        const userCredential = await createUserWithEmailAndPassword(
-          secondaryAuth, 
-          userData.email, 
-          userData.password
-        );
-
-        const authUid = userCredential.user.uid;
-        console.log("Auth account created with UID:", authUid);
-
-        await signOut(secondaryAuth);
-        await deleteApp(secondaryApp);
-
-        // If the UIDs are different, we need to migrate the document
-        if (authUid !== pendingDocId) {
-          console.log("Migrating user document from temp ID to Auth UID...");
-          const newUserRef = doc(db, "users", authUid);
-          await setDoc(newUserRef, {
-            ...userData,
-            status: "Active",
-            approvedAt: serverTimestamp()
-          });
-          await deleteDoc(userRef);
-          console.log("User document migrated successfully");
-        } else {
-          // Just update the existing document
-          await updateDoc(userRef, {
-            status: "Active",
-            approvedAt: serverTimestamp()
-          });
-        }
-        
-        console.log("User approved successfully");
-
-        await logAuditEvent(
-          "User Approved",
-          "approve",
-          "Users",
-          `Approved user: ${userData.name}`,
-          {
-            beforeValue: "Pending",
-            afterValue: "Active",
-            targetUserId: authUid,
-            targetUserEmail: userData.email,
-            targetUserPosition: userData.position
-          }
-        );
-
-        alert(`✅ ${userData.name} has been approved successfully!\n\nFirebase Auth account created.\nThey can now login with:\nEmail: ${userData.email}\nPassword: (the password you set)`);
-        
-      } catch (err) {
-        console.error("Error approving user:", err);
-        if (err.code === 'auth/email-already-in-use') {
-          alert("Error: This email already has a Firebase Auth account. Updating status only...");
-          try {
-            await updateDoc(userRef, {
-              status: "Active",
-              approvedAt: serverTimestamp()
-            });
-            alert("Status updated to Active!");
-          } catch (updateErr) {
-            console.error("Error updating status:", updateErr);
-          }
-        } else {
-          alert("Error approving user: " + err.message);
-        }
+        await updateDoc(userRef, {
+          status: "active",            // ✅ Changed from "Active" to "active"
+          approvedAt: serverTimestamp()
+        });
+        alert("Status updated to Active!");
+      } catch (updateErr) {
+        console.error("Error updating status:", updateErr);
       }
-    };
-    window.deactivateUser = async (id) => {
-      if (confirm("Deactivate this user? They will not be able to login.")) {
-        try {
-          const userRef = doc(db, "users", id);
-          const userDoc = await getDoc(userRef);
-          const userData = userDoc.data();
-          const userName = userData.name || `${userData.firstName} ${userData.lastName}`;
+    } else {
+      alert("Error approving user: " + err.message);
+    }
+  }
+};
+window.deactivateUser = async (id) => {
+  if (confirm("Deactivate this user? They will not be able to login.")) {
+    try {
+      const userRef = doc(db, "users", id);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+      const userName = userData.name || `${userData.firstName} ${userData.surname || userData.lastName}`;
 
-          await updateDoc(userRef, { status: "Inactive" });
+      await updateDoc(userRef, { status: "inactive" });  // ✅ Changed from "Inactive" to "inactive"
 
-          await logAuditEvent(
-            "User Deactivated",
-            "status",
-            "Users",
-            `Deactivated user: ${userName}`,
-            {
-              beforeValue: "Active",
-              afterValue: "Inactive",
-              targetUserId: id,
-              targetUserEmail: userData.email
-            }
-          );
-
-          alert("User deactivated successfully!");
-        } catch (err) {
-          console.error("Error deactivating user:", err);
-          alert("Error: " + err.message);
+      await logAuditEvent(
+        "User Deactivated",
+        "status",
+        "Users",
+        `Deactivated user: ${userName}`,
+        {
+          beforeValue: "active",      // ✅ lowercase
+          afterValue: "inactive",     // ✅ lowercase
+          targetUserId: id,
+          targetUserEmail: userData.email
         }
-      }
-    };
+      );
+
+      alert("User deactivated successfully!");
+    } catch (err) {
+      console.error("Error deactivating user:", err);
+      alert("Error: " + err.message);
+    }
+  }
+};
+
+window.activateUser = async (id) => {
+  if (confirm("Activate this user? They will be able to login again.")) {
+    try {
+      const userRef = doc(db, "users", id);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+      const userName = userData.name || `${userData.firstName} ${userData.surname || userData.lastName}`;
+
+      await updateDoc(userRef, { status: "active" });  // ✅ Changed from "Active" to "active"
+
+      await logAuditEvent(
+        "User Activated",
+        "status",
+        "Users",
+        `Activated user: ${userName}`,
+        {
+          beforeValue: "inactive",    // ✅ lowercase
+          afterValue: "active",       // ✅ lowercase
+          targetUserId: id,
+          targetUserEmail: userData.email
+        }
+      );
+
+      alert("User activated successfully!");
+    } catch (err) {
+      console.error("Error activating user:", err);
+      alert("Error: " + err.message);
+    }
+  }
+};
 
     window.activateUser = async (id) => {
       if (confirm("Activate this user? They will be able to login again.")) {
@@ -1880,7 +1908,6 @@ function setupAutoLogout(auth) {
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setupAutoLogout(auth);
         const userDocRef = doc(db, "users", user.uid);
         onSnapshot(userDocRef, (docSnap) => {
           if (!docSnap.exists()) {
